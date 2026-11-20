@@ -34,6 +34,7 @@ a{color:inherit}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 8px}
 .brand{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.02em;text-transform:uppercase;margin:0 0 8px}
 .brand span{color:var(--accent)}
+.hello{margin:-4px 0 8px;font-size:15px;font-weight:600;color:var(--muted)}
 .tabs{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:1 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 9px;font-weight:600;font-size:14px;cursor:pointer}
@@ -158,6 +159,7 @@ input[type=text]{width:100%;font:inherit;border:1px solid var(--line);border-rad
 <div class="wrap">
   <header class="top">
     <p class="brand">Kalistenik <span>3 gün</span></p>
+    <p class="hello">Selam Zeynel</p>
     <nav class="tabs" role="tablist" id="tabs"></nav>
   </header>
   <main id="view"></main>
