@@ -3371,7 +3371,7 @@ const DAYS=[
   {id:'g2d',lad:'PL_TUCK',def:3,reg:'KARIN',hold:'4 × 5-10 sn',reps:'4 × 5-6',rest:75,tip:'Dirsek düz, kalça yukarı, ayak ellere'},
   {id:'g2e',lad:'PL_PUSH',def:3,reg:'GÖĞÜS',hold:'—',reps:'3 × 5-8',rest:75,tip:'Omuz bileğin önünde; dirsek geriye'},
   {id:'g2f',alt:["PU_LAT", "PU_GRIP", "PU_SHLD"],lad:'PU_ISO',def:3,reg:'SIRT',hold:'4 × 10-15 sn (1. set ayak destekli)',reps:'4 × 3-5',rest:75,tip:'Çene bar üstü, omuz aşağı kilitli'},
-  {id:'g2g',alt:["LG_KNEE", "LG_HINGE"],lad:'LG_QUAD',def:7,reg:'BACAK',hold:'—',reps:'3 × 6-8 / bacak',rest:45,tip:'Diz ayak hattında; ağrısız aralık'},
+  {id:'g2g',alt:["LG_KNEE", "LG_HINGE", "LG_NORDIC"],lad:'LG_QUAD',def:7,reg:'BACAK',hold:'—',reps:'3 × 6-8 / bacak',rest:45,tip:'Diz ayak hattında; ağrısız aralık'},
  ]},
  {id:'g3',t:'Gün 3',name:'Press + L-sit',end:'Kapıda lat esnemesi, 1 × 30 sn / taraf',endKey:'lat stretch calisthenics',slots:[
   {id:'g3a',lad:'HS_ENTRY',def:4,reg:'OMUZ',hold:'—',reps:'3 × 5',rest:45,tip:'Kalçayı omuz üstüne taşı, tekme değil'},
@@ -3393,7 +3393,7 @@ const KEY='kal-state-v4';
 try{if(!localStorage.getItem(KEY)){const o=JSON.parse(localStorage.getItem('kal-state-v3')||localStorage.getItem('kal-state-v2')||'null');if(o&&o.log)localStorage.setItem(KEY,JSON.stringify({log:o.log}));}}catch(e){}
 let state={levels:{},log:[],alt:{}}, store=null, saveT=null, saving=false, again=false, statusMsg='';
 try{const r=localStorage.getItem(KEY); if(r) state=Object.assign(state,JSON.parse(r));}catch(e){}
-const ALTN={HS_BAL:'Handstand denge',PL_BENT:'Bükük kol denge',HS_LINE:'Duvarda hizalama',HS_SHIFT:'Omuz dokunuşu',CORE_HOLLOW:'Hollow',LS_HANG:'Asılı bacak kaldırma',CORE_PELVIS:'Leğen / V-up',CORE_ARCH:'Arch (sırt)',PU_ISO:'Barfiks tutuşları',PU_LAT:'Düz kol lat',PU_GRIP:'Tutuş gücü',PU_SHLD:'Omuz koruma',LG_QUAD:'Tek bacak',LG_KNEE:'Diz önü',LG_HINGE:'Kalça arkası'};
+const ALTN={HS_BAL:'Handstand denge',PL_BENT:'Bükük kol denge',HS_LINE:'Duvarda hizalama',HS_SHIFT:'Omuz dokunuşu',CORE_HOLLOW:'Hollow',LS_HANG:'Asılı bacak kaldırma',CORE_PELVIS:'Leğen / V-up',CORE_ARCH:'Arch (sırt)',PU_ISO:'Barfiks tutuşları',PU_LAT:'Düz kol lat',PU_GRIP:'Tutuş gücü',PU_SHLD:'Omuz koruma',LG_QUAD:'Tek bacak',LG_KNEE:'Diz önü',LG_HINGE:'Kalça arkası',LG_NORDIC:'Nordic (hamstring)'};
 const lkey=s=>s.base&&s.lad!==s.base?s.id+':'+s.lad:s.id;
 const lvlOf=s=>state.levels[lkey(s)]??(s.base&&s.lad!==s.base?1:s.def);
 DAYS.forEach(d=>d.slots.forEach(s=>{if(!s.alt)return;s.base=s.lad;delete s.lad;Object.defineProperty(s,'lad',{get(){const a=state.alt&&state.alt[s.id];return a&&LADDERS[a]?a:s.base;},enumerable:true});}));
