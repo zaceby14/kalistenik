@@ -100,6 +100,7 @@ input[type=text]{width:100%;font:inherit;border:1px solid var(--line);border-rad
 .logi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:4px 10px}
 .logi small{color:var(--muted)}
 .fbrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.fbb{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:12px 6px;font:700 15px inherit;cursor:pointer}.fbb.on.fb-k{background:#2e9b57;color:#fff;border-color:#2e9b57}.fbb.on.fb-z{background:#d9902a;color:#fff;border-color:#d9902a}.fbb.on.fb-a{background:#c8463d;color:#fff;border-color:#c8463d}
+.sesb{border:0;background:none;font-size:20px;padding:4px 6px;cursor:pointer}
 .chg{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:8px 12px;font-size:14px;font-weight:600}
 .chip.up{color:var(--accent)}.spark{vertical-align:middle}
 .tgrid{display:grid;gap:8px;margin-top:8px}.tgrid label{display:grid;gap:4px;font-size:14px}.tgrid input{width:100%;font:inherit;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--surface);color:var(--ink)}
@@ -3356,6 +3357,21 @@ function weekDone(){const w=weekStart(),out=new Set();state.log.forEach(e=>{if(!
 /* ses + ekran açık */
 let AC=null;
 function unlockAudio(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}catch(e){}}
+/* motivasyon sesleri: Türkçe konuşma + kısa korna */
+const sesOn=()=>{try{return localStorage.getItem('kal-ses')!=='0';}catch(e){return true;}};
+let TRV=null;function pickV(){try{const vs=speechSynthesis.getVoices();TRV=vs.find(v=>/^tr/i.test(v.lang))||null;}catch(e){}}
+try{if('speechSynthesis' in window){pickV();speechSynthesis.onvoiceschanged=pickV;}}catch(e){}
+function say(txt,o={}){if(!sesOn())return;try{const u=new SpeechSynthesisUtterance(txt);u.lang='tr-TR';if(TRV)u.voice=TRV;u.rate=o.rate||1.1;u.pitch=o.pitch||1.2;u.volume=1;if(!o.queue)speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+function tone(f,d,v=.3,type='sine',o=0){try{if(!AC)return;const t=AC.currentTime+o,os=AC.createOscillator(),g=AC.createGain();os.type=type;os.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d);os.connect(g).connect(AC.destination);os.start(t);os.stop(t+d+.02);}catch(e){}}
+function horn(){if(!sesOn())return;tone(392,.18,.25,'sawtooth');tone(523,.32,.28,'sawtooth',.16);}
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const MOT={go:['BAS!','Hadi, BAS!','Kalk! BAS!','Bas aslanım!','Hadi! Devam!','Yüklen! BAS!'],
+ hold:['Sık dişini!','Tut! Bırakma!','Kilitle!','Hadi, tut!'],
+ set:['Helal!','Temiz!','Güzel!','İşte bu!'],
+ ex:['Hareket bitti, helal!','Tamamdır! Sıradaki!','Bitti bu! Devam!'],
+ fin:['Antrenman bitti! Helal olsun!','Bitti! Kral gibisin!']};
+function hype(k){if(!sesOn())return;if(k==='go')horn();say(pick(MOT[k]),k==='go'?{rate:1.15,pitch:1.3}:{});}
+function warmSpeech(){try{if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(e){}}
 function beep(){try{if(!AC)return;[0,.28].forEach(o=>{const t=AC.currentTime+o,os=AC.createOscillator(),g=AC.createGain();os.frequency.value=880;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.35,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.2);os.connect(g).connect(AC.destination);os.start(t);os.stop(t+.22);});}catch(e){}}
 let WL=null;
 async function wake(on){try{if(on){if(!WL&&navigator.wakeLock){WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null;});}}else if(WL){await WL.release();WL=null;}}catch(e){}}
@@ -3464,8 +3480,8 @@ function closeSheet(){const fromRun=open&&open.ctx==='run';$('#sheet').hidden=tr
 let tI=null,tL=0;
 function stopT(){clearInterval(tI);tI=null;}
 function startT(sec){stopT();tL=sec;const el=$('#timer');el.classList.remove('end');el.textContent=tL;
-  tI=setInterval(()=>{tL--;const e=$('#timer');if(!e){stopT();return;}e.textContent=Math.max(0,tL);
-    if(tL<=0){stopT();e.textContent='Hazır';e.classList.add('end');beep();try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(x){}}},1000);}
+  tI=setInterval(()=>{tL--;const e=$('#timer');if(!e){stopT();return;}e.textContent=Math.max(0,tL);if(tL>0&&tL<=3&&sesOn())tone(660,.12,.25);
+    if(tL<=0){stopT();e.textContent='BAS!';e.classList.add('end');if(sesOn())hype('go');else beep();try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(x){}}},1000);}
 const slotById=id=>DAYS.flatMap(d=>d.slots).find(x=>x.id===id);
 document.addEventListener('click',ev=>{
   const t=ev.target.closest('[data-tab],[data-slot],#back,[data-lv],#pick,[data-set],#tstart,#treset,#save,[data-del],#bkout,#bkin,[data-alt],#undo,#tsave,[data-tdel]'); if(!t) return;
@@ -3503,21 +3519,21 @@ let run=null;
 function runSteps(d){return [{k:'warm'},{k:'pre'},...d.slots.map(s=>({k:'ex',s})),{k:'end'},{k:'fin'}];}
 let clockI=null;
 const mmss=ms=>{const t=Math.max(0,Math.floor(ms/1000));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
-function startRun(dayId){const d=DAYS.find(x=>x.id===dayId);run={d,i:0,steps:runSteps(d),done:{},holds:{},fb:{},notes:Object.assign({},(state.draftNotes||{})[dayId]||{}),t0:Date.now(),hw:null};$('#run').hidden=false;document.body.style.overflow='hidden';wake(true);
-  clearInterval(clockI);clockI=setInterval(()=>{if(!run){clearInterval(clockI);return;}const c=$('#rclock');if(c&&!run.tEnd)c.textContent=mmss(Date.now()-run.t0);const h=$('#holdt');if(h&&run.hw)h.textContent=Math.floor((Date.now()-run.hw.t)/1000)+' sn';},250);drawRun();}
+function startRun(dayId){const d=DAYS.find(x=>x.id===dayId);run={d,i:0,steps:runSteps(d),done:{},holds:{},fb:{},notes:Object.assign({},(state.draftNotes||{})[dayId]||{}),t0:Date.now(),hw:null};unlockAudio();warmSpeech();$('#run').hidden=false;document.body.style.overflow='hidden';wake(true);
+  clearInterval(clockI);clockI=setInterval(()=>{if(!run){clearInterval(clockI);return;}const c=$('#rclock');if(c&&!run.tEnd)c.textContent=mmss(Date.now()-run.t0);if(run.hw){const sn=Math.floor((Date.now()-run.hw.t)/1000);if(sn>=10&&sn%10===0&&sn!==run.hw.last){run.hw.last=sn;say(sn+' saniye!'+(sn>=20?' Bırakma!':''));}}const h=$('#holdt');if(h&&run.hw)h.textContent=Math.floor((Date.now()-run.hw.t)/1000)+' sn';},250);drawRun();}
 function endRun(){stopT();clearInterval(clockI);wake(false);$('#run').hidden=true;$('#run').innerHTML='';document.body.style.overflow='';run=null;}
 function stretchMedia(k){const dr=DRAW['ST:'+k],v=vidsOf(k)[0];
   return (dr?`<div class="stage"><span class="tag">Esneme çizimi · ${dr.view||(dr.k.some(p=>p.front)?'önden':'yandan')}</span><div class="anim" data-draw="ST:${k}"></div><span class="cap" data-cap="ST:${k}">&nbsp;</span></div>`:'')+(v?vidLink(v):'');}
 function drawRun(keep){
   const {d,i,steps}=run, st=steps[i], tot=steps.length, el=$('#run');
-  const head=`<div class="bar"><button class="back" data-runx="1">✕ Bitir</button><span class="step">${d.t} · adım ${i+1}/${tot}</span><span class="clock" id="rclock">${mmss((run.tEnd||Date.now())-run.t0)}</span></div><div class="prog"><i style="width:${Math.round((i)/(tot-1)*100)}%"></i></div>`;
+  const head=`<div class="bar"><button class="back" data-runx="1">✕ Bitir</button><span class="step">${d.t} · adım ${i+1}/${tot}</span><button class="sesb" data-rses="1" aria-label="Sesi aç/kapat">${sesOn()?'🔊':'🔇'}</button><span class="clock" id="rclock">${mmss((run.tEnd||Date.now())-run.t0)}</span></div><div class="prog"><i style="width:${Math.round((i)/(tot-1)*100)}%"></i></div>`;
   const nav=(nextTxt,ready=true)=>`<div class="nav"><button class="btn ghost" data-rprev="1" ${i===0?'disabled':''}>← Geri</button><button class="btn" data-rnext="1" ${ready?'':'style="opacity:.6"'}>${nextTxt}</button></div>`;
   const vrow=w=>{const v=vidsOf(w[0])[0];return `<div><span>${w[1]}</span><span class="r">${w[2]}${v?' '+ytA(v.id,'',"▶ 1 dk",w[1],{wide:vWide(v)}):''}</span></div>`;};
   let body='';
   if(st.k==='warm') body=`<p class="lvname">Isınma</p><p class="en">≈ 5 dk · omuzlar barfikse de hazırlanır</p><div class="plain">${WARM.map(w=>{const v=vidsOf(w[0])[0];return `<div class="st">${DRAW['ST:'+w[0]]?`<span class="mini" data-draw="ST:${w[0]}"></span>`:''}<span class="nm">${w[1]}<br><small style="color:var(--muted)">${w[2]}</small></span><span class="r">${v?ytA(v.id,'','▶ video',v.title):''}</span></div>`;}).join('')}</div>${nav('Isınma bitti →')}`;
   else if(st.k==='pre') body=`<p class="lvname">Başlamadan esneme</p><p class="en">≈ 3 dk</p><div class="plain">${PRE.map(w=>{const v=vidsOf(w[0])[0];return `<div class="st"><span class="mini" data-draw="ST:${w[0]}"></span><span class="nm">${w[1]}<br><small style="color:var(--muted)">${w[2]}</small></span><span class="r">${v?ytA(v.id,'',"▶ 1 dk",w[1],{wide:vWide(v)}):''}</span></div>`;}).join('')}</div>${nav('Hareketlere geç →')}`;
   else if(st.k==='end') body=`<p class="lvname">Son esneme</p><p class="en">${d.end}</p>${stretchMedia(d.endKey)}${nav('Bitir →')}`;
-  else if(st.k==='fin'){run.tEnd=run.tEnd||Date.now();const sm=runSummary();
+  else if(st.k==='fin'){if(!run.tEnd)setTimeout(()=>hype('fin'),300);run.tEnd=run.tEnd||Date.now();const sm=runSummary();
     body=`<p class="done-hero">Bitti 👏</p><p class="en">${d.t} · ${d.name}</p>
     <div class="sum"><div class="box"><h3>Süre</h3><div class="big">${Math.max(1,Math.round((run.tEnd-run.t0)/60000))} dk</div></div><div class="box"><h3>Set</h3><div class="big">${sm.done} / ${sm.tot}</div></div></div>
     ${sm.holds.length?`<div class="box"><h3>Tutuşlar</h3><div class="plain" style="border:0;padding:0">${sm.holds.map(h=>`<div><span>${esc(h[0])}</span><span class="r">${h[1]}</span></div>`).join('')}</div></div>`:''}
@@ -3546,21 +3562,23 @@ function drawRun(keep){
   const y=el.scrollTop; el.innerHTML=`<div class="wrap">${head}${body}</div>`; el.scrollTop=keep?y:0;
 }
 document.addEventListener('click',ev=>{
-  const t=ev.target.closest('[data-run],[data-runx],[data-rprev],[data-rnext],[data-rset],[data-rsave],[data-rhold],[data-rfb]'); if(!t) return;
+  const t=ev.target.closest('[data-run],[data-runx],[data-rprev],[data-rnext],[data-rset],[data-rsave],[data-rhold],[data-rfb],[data-rses]'); if(!t) return;
+  unlockAudio();
+  if(t.dataset.rses){const on=!sesOn();try{localStorage.setItem('kal-ses',on?'1':'0');}catch(e){}t.textContent=on?'🔊':'🔇';if(on){warmSpeech();say('Ses açık. Hadi!');}else{try{speechSynthesis.cancel();}catch(e){}}return;}
   if(t.dataset.rfb){const s=run.steps[run.i].s;run.fb[s.id]=run.fb[s.id]===t.dataset.rfb?undefined:t.dataset.rfb;drawRun(true);return;}
   if(t.dataset.rhold){const s=run.steps[run.i].s;
-    if(!run.hw){stopT();run.hw={id:s.id,t:Date.now()};drawRun(true);return;}
+    if(!run.hw){stopT();run.hw={id:s.id,t:Date.now(),last:0};hype('hold');drawRun(true);return;}
     const sec=Math.round((Date.now()-run.hw.t)/1000);run.hw=null;(run.holds[s.id]=run.holds[s.id]||[]).push(sec);
     const dn=run.done[s.id],j=dn.indexOf(false);if(j>=0)dn[j]=true;drawRun(true);
-    if(dn.every(Boolean)){const e=$('#timer');e.textContent='Hazır';e.classList.add('end');}else startT(s.rest);return;}
+    if(dn.every(Boolean)){const e=$('#timer');e.textContent='Hazır';e.classList.add('end');hype('ex');}else{say(sec+' saniye. '+pick(MOT.set));startT(s.rest);}return;}
   if(t.dataset.run){startRun(t.dataset.run);return;}
   if(t.dataset.runx){endRun();render(false);return;}
   if(t.dataset.rprev){stopT();run.hw=null;run.i=Math.max(0,run.i-1);drawRun();return;}
   if(t.dataset.rnext){stopT();run.hw=null;run.i=Math.min(run.steps.length-1,run.i+1);drawRun();return;}
   if(t.dataset.rset){const s=run.steps[run.i].s,dn=run.done[s.id],j=+t.dataset.rset;dn[j]=!dn[j];
     t.classList.toggle('done',dn[j]);t.setAttribute('aria-pressed',dn[j]);
-    if(dn.every(Boolean)){stopT();const e=$('#timer');e.textContent='Hazır';e.classList.add('end');const nb=document.querySelector('[data-rnext]');if(nb)nb.style.opacity='';}
-    else if(dn[j]) startT(s.rest); return;}
+    if(dn.every(Boolean)){stopT();hype('ex');const e=$('#timer');e.textContent='Hazır';e.classList.add('end');const nb=document.querySelector('[data-rnext]');if(nb)nb.style.opacity='';}
+    else if(dn[j]){hype('set');startT(s.rest);} return;}
   if(t.dataset.rsave){const txt=($('#runnote').value||'').trim(),sm=runSummary(),mins=Math.max(1,Math.round((run.tEnd-run.t0)/60000));
     const now=Date.now(),dt=new Date().toLocaleDateString('tr-TR');
     run.d.slots.slice().reverse().forEach(s=>{const L=LADDERS[s.lad],n=lvlOf(s),lv=L.levels[n-1],dn=run.done[s.id]||[],h=run.holds[s.id]||[],nt=(run.notes[s.id]||'').trim();
