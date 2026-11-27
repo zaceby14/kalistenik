@@ -166,6 +166,58 @@ input[type=text]{width:100%;font:inherit;border:1px solid var(--line);border-rad
 .vp-open.big{font-size:16px;color:var(--accent-ink);background:var(--accent);padding:12px 18px;border-radius:12px;text-decoration:none}
 .lvtop{display:flex;flex-direction:column;gap:8px}
 .clock{margin-left:auto;font-family:var(--display);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums;color:var(--muted)}
+
+/* ===== PRO görünüm katmanı ===== */
+:root{--accent2:#ff9a3d;--glow:rgba(224,84,42,.35);--card-sh:0 1px 2px rgba(16,24,32,.06),0 8px 24px -12px rgba(16,24,32,.18)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--accent2:#ffb36b;--glow:rgba(255,122,77,.35);--card-sh:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px -14px rgba(0,0,0,.7)}}
+body{background:radial-gradient(1200px 500px at 110% -10%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 60%),radial-gradient(900px 400px at -20% 0%,color-mix(in srgb,var(--r-omuz) 10%,transparent),transparent 60%),var(--bg);background-attachment:fixed}
+header.top{position:sticky;top:0;z-index:20;backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);background:color-mix(in srgb,var(--bg) 78%,transparent);margin:0 -16px;padding:12px 16px 8px}
+.brand{font-size:30px;letter-spacing:.04em}
+.brand span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tab{transition:background .25s,color .25s,transform .15s}
+.tab:active{transform:scale(.94)}
+.tab[aria-selected="true"]{box-shadow:0 6px 16px -6px var(--glow)}
+#view>*{animation:proIn .42s cubic-bezier(.2,.8,.2,1) both}
+#view>*:nth-child(2){animation-delay:.03s}#view>*:nth-child(3){animation-delay:.06s}#view>*:nth-child(4){animation-delay:.09s}#view>*:nth-child(5){animation-delay:.12s}
+.list .row{box-shadow:var(--card-sh);transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .2s;animation:proIn .45s cubic-bezier(.2,.8,.2,1) both}
+.list .row:nth-child(1){animation-delay:.04s}.list .row:nth-child(2){animation-delay:.08s}.list .row:nth-child(3){animation-delay:.12s}.list .row:nth-child(4){animation-delay:.16s}.list .row:nth-child(5){animation-delay:.2s}.list .row:nth-child(6){animation-delay:.24s}.list .row:nth-child(7){animation-delay:.28s}
+.list .row:active{transform:scale(.975)}
+@media (hover:hover){.list .row:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}}
+.list .row .n{background:linear-gradient(160deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.dots i.on{background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 6px var(--glow)}
+.btn,.start{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 24px -10px var(--glow);transition:transform .15s,box-shadow .2s,filter .2s}
+.btn.ghost{background:transparent;box-shadow:none}
+.btn:active,.start:active{transform:scale(.97);filter:brightness(1.05)}
+.start{position:relative;overflow:hidden}
+.start::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);animation:proShine 3.2s ease-in-out infinite}
+.box,.plain,.stage,.vid{box-shadow:var(--card-sh)}
+.sheet:not([hidden]){animation:proUp .38s cubic-bezier(.2,.8,.2,1) both}
+.run:not([hidden]){animation:proUp .4s cubic-bezier(.2,.8,.2,1) both}
+.vp:not([hidden]) .vp-card{animation:proPop .3s cubic-bezier(.2,.8,.2,1) both}
+.step{animation:proSlide .35s cubic-bezier(.2,.8,.2,1) both}
+.set{transition:transform .15s,background .2s,box-shadow .2s}
+.set:active{transform:scale(.92)}
+.set.done{box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 30%,transparent);animation:proPop .3s both}
+.timer{font-variant-numeric:tabular-nums;transition:color .3s,transform .3s}
+.timer.end{animation:proBeat .6s ease-in-out 3;color:var(--accent)}
+.prog i{background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 10px var(--glow);transition:width .45s cubic-bezier(.2,.8,.2,1)}
+.holdbtn.on{animation:proPulse 1.4s ease-in-out infinite}
+.wk.on{box-shadow:0 0 0 2px var(--ok) inset,0 6px 14px -8px var(--ok)}
+.done-hero{animation:proPop .5s cubic-bezier(.2,.8,.2,1) both}
+.prof button{box-shadow:var(--card-sh);transition:transform .2s,border-color .2s}
+.prof button:active{transform:scale(.96)}
+.prof .gz,.prof .gb{animation:proFloat 3s ease-in-out infinite}
+.prof h1{background:linear-gradient(90deg,var(--ink),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sheet,.run{z-index:40!important}.vp{z-index:60!important}
+@keyframes proIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes proUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes proSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@keyframes proPop{0%{transform:scale(.9);opacity:0}60%{transform:scale(1.03);opacity:1}100%{transform:scale(1)}}
+@keyframes proBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes proPulse{0%,100%{box-shadow:0 0 0 0 var(--glow)}50%{box-shadow:0 0 0 10px transparent}}
+@keyframes proShine{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+@keyframes proFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 
 <div class="wrap">
@@ -246,7 +298,7 @@ function mix(a,b,t){const same=(A,B)=>A.length===B.length&&A.every((q,i)=>d2(q,B
   else if(ff){const G=a.feet[0];P=vadd(G,pol(vsub(a.P,G),vsub(b.P,G),t));S=vadd(P,pol(vsub(a.S,a.P),vsub(b.S,b.P),t));}
   else{P=lp(a.P,b.P,t);S=vadd(P,pol(vsub(a.S,a.P),vsub(b.S,b.P),t));}
   const limb=(A,B,fix,R0,R1,Rt)=>A.map((f,i)=>{const g=B[i]||f;const w=(fix||(f[1]<.09&&g[1]<.09))?lp(f,g,t):vadd(Rt,pol(vsub(f,R0),vsub(g,R1),t));return[w[0],w[1],...(t<.5?f:g).slice(2)];});
-  return{facing:a.facing,front:a.front,S,P,h:lerp(a.h,b.h,t),hd:lerp(a.hd??.17,b.hd??.17,t),sh:lerp(a.sh||0,b.sh||0,t),
+  return{facing:a.facing,front:a.front,S,P,h:lerp(a.h,b.h,t),hd:lerp(a.hd??.17,b.hd??.17,t),sh:lerp(a.sh||0,b.sh||0,t),rb:lerp(a.rb||0,b.rb||0,t),sc:a.sc||b.sc,
     feet:limb(a.feet,b.feet,ff,a.P,b.P,P),hands:limb(a.hands,b.hands,hf,a.S,b.S,S)};}
 /* front:1 = önden görünüş: kollar omuz genişliğinden, bacaklar kalça genişliğinden çıkar (0. uzuv solda) */
 function joints(p){const J={S:p.S,P:p.P,legs:[],arms:[]},fr=p.front?1:0,r=(o,i,w)=>fr?[o[0]+(i?w:-w),o[1]]:o;
@@ -293,11 +345,18 @@ function svgFor(d,time){
     if(f[1]<.09) return [f[0]+fa*.09,f[1]];
     return [f[0]+dx/L*.07,f[1]+dy/L*.07];};
   const limb=(far,part=3)=>{let o='';const col=far?'var(--far)':'var(--ink)';
-    if(part&1) J.legs.forEach(([k,f,fr,st,o0])=>{if(fr===far){const t=foot(k,f,st);o+=seg2(o0,k,col,.12)+seg2(k,f,col,.09)+ln(f,t,col,.06);}});
-    if(part&2) J.arms.forEach(([e,h,fr,o0])=>{if(fr===far) o+=seg2(o0,e,col,.085)+seg2(e,h,col,.07);});return o;};
+    const dot=(q,r)=>`<circle cx="${F(q[0])}" cy="${F(Y(q[1]))}" r="${r}" fill="${OL}" fill-opacity=".55"/>`;
+    if(part&1) J.legs.forEach(([k,f,fr,st,o0])=>{if(fr===far){const t=foot(k,f,st);o+=seg2(o0,k,col,.12)+seg2(k,f,col,.09)+ln(f,t,col,.06)+dot(k,.022)+dot(f,.018);}});
+    if(part&2) J.arms.forEach(([e,h,fr,o0])=>{if(fr===far) o+=seg2(o0,e,col,.085)+seg2(e,h,col,.07)+dot(e,.018)+dot(h,.015);});return o;};
   const torso=()=>{const T=J.T,dx=T[0]-J.P[0],dy=T[1]-J.P[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,ws=p.front?.17:.1,wp=p.front?.13:.075;
-    const pts=[[T[0]+nx*ws,T[1]+ny*ws],[T[0]-nx*ws,T[1]-ny*ws],[J.P[0]-nx*wp,J.P[1]-ny*wp],[J.P[0]+nx*wp,J.P[1]+ny*wp]];
-    return `<polygon points="${pts.map(q=>F(q[0])+','+F(Y(q[1]))).join(' ')}" fill="var(--ink)" stroke="var(--ink)" stroke-width=".04" stroke-linejoin="round"/>`;};
+    if(p.front||!p.sc){const pts=[[T[0]+nx*ws,T[1]+ny*ws],[T[0]-nx*ws,T[1]-ny*ws],[J.P[0]-nx*wp,J.P[1]-ny*wp],[J.P[0]+nx*wp,J.P[1]+ny*wp]];
+      return `<polygon points="${pts.map(q=>F(q[0])+','+F(Y(q[1]))).join(' ')}" fill="var(--ink)" stroke="var(--ink)" stroke-width=".04" stroke-linejoin="round"/>`;}
+    /* sırt eğrisi + kürek kemiği: rb>0 kürek açık (üst sırt kabarır), rb<0 kürek sıkışık */
+    const fa=p.facing??1,sg=Math.abs(ny)>.3?(ny>0?1:-1):(nx*fa<0?1:-1),bx=nx*sg,by=ny*sg,rb=p.rb||0;
+    const Q=(a,u,v)=>[a[0]+bx*u+dx/L*v,a[1]+by*u+dy/L*v],U=[T[0]-dx*.3,T[1]-dy*.3],M=[T[0]-dx*.55,T[1]-dy*.55];
+    const pts=[Q(T,ws,0),Q(U,ws+rb,0),Q(M,(ws+wp)/2+rb*.35,0),Q(J.P,wp,0),Q(J.P,-wp,0),Q(M,-(ws+wp)/2+rb*.2,0),Q(U,-ws+rb*.5,0),Q(T,-ws,0)];
+    const bl=Q(U,ws+rb+.035,.02),b2=Q(U,ws+rb+.035,-.13+rb*.3);
+    return `<polygon points="${pts.map(q=>F(q[0])+','+F(Y(q[1]))).join(' ')}" fill="var(--ink)" stroke="var(--ink)" stroke-width=".04" stroke-linejoin="round"/>`+ln(bl,b2,'var(--accent)',.055);};
   s+=limb(true);
   s+=ln(J.T,J.head,'var(--ink)',.07)+torso()+`<circle cx="${F(J.head[0])}" cy="${F(Y(J.head[1]))}" r=".1" fill="var(--ink)" stroke="${OL}" stroke-width=".025"/>`;
   s+=limb(false,1)+front()+limb(false,2);
@@ -3316,6 +3375,11 @@ const WARM=[['joint circles mobility','Eklem rotasyonları','boyun, omuz, kalça
 const PRE=[['leg swings dynamic stretch','Bacak salınımı (ön-arka)','10/10'],['half kneeling hip flexor stretch','Yarım diz kalça bükücü sallanma','8/8, sonda 2 sn tut'],['puppy pose shoulder stretch','Köpek yavrusu omuz esnemesi','2×15 sn'],['standing pike stretch','Ayakta pike (nefesli)','30 sn, 3 derin nefes'],['straddle rock stretch','Straddle sallanma','30 sn']];
 const OFF=[['pelvic tilt cat cow','Kedi-deve (pelvis odaklı)','2×10'],['jefferson curl bodyweight','Jefferson curl','2×6 (ağırlıksız; sonra 2-4 kg)'],['pnf hamstring stretch','PNF hamstring (bantla)','2×45 sn/bacak (5 sn kas, gevşe, derinleş)'],['seated pike stretch','Oturarak pike','2×45 sn, son 10 sn aktif'],['pancake stretch','Pancake','3×45 sn'],['cossack squat mobility','Cossack squat (dinamik)','2×8/8'],['shoulder flexion wall stretch','Duvarda omuz fleksiyon esnemesi','3×30 sn'],['90 90 hip mobility','90/90 kalça geçişi','2×8'],['frog stretch hip mobility','Kurbağa esnemesi','2×45 sn'],['sphinx stretch','Sfenks / kobra','2×30 sn'],['wrist stretch calisthenics','Bilek esneme serisi','2×30 sn/yön'],['standing calf stretch','Duvarda baldır esnemesi','2×30 sn/bacak']];
 Object.entries(STRETCH).forEach(([k,d])=>{if(!DRAW['ST:'+k])DRAW['ST:'+k]=d;});
+/* kürek hareketi olan karelere sırt eğrisi ver */
+Object.values(DRAW).forEach(d=>{if(!d||!d.k)return;let hit=false;d.k.forEach(p=>{const c=p.cap||'';
+  if(/sırt kabarır|üst sırt yükselir|kürekleri aç|kürek açılır|kürekler açılır|protrak/i.test(c)){p.rb=.06;hit=true;}
+  else if(/kürekleri sık|kürekleri birleştir|göğüs çöker|kürekler birleşir|retrak/i.test(c)){p.rb=-.045;hit=true;}});
+  if(hit){d.k.forEach(p=>{p.sc=1;p.rb=p.rb||0;});d._b=null;}});
 
 /* kayıt */
 const PROFS={zeynel:{ad:'Zeynel',cls:'',h:'3d8295dca3c20ede915b542f6002d7b063319e889e0e1bd10066ad6469ba0eb3'},bayram:{ad:'Bayram',cls:'s',h:'c78ff0eb8c8dd03b0baf595219c496635ec51480a756b7ddd81481113fca1d8d'}};
