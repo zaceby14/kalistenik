@@ -881,8 +881,10 @@ function headSvg(J,col){const h=J.head,c=col||'var(--ink)',F_=n=>n.toFixed(3);le
   return s;}
 const ease=t=>.5-.5*Math.cos(Math.PI*t);
 /* koç çizgileri: hareket oynar, kilit karede durunca yumuşakça belirir, sonra kaybolur */
-const CUEH=3.2;function cueOp(t,d,on){if(!on)return 0;const a=.45,b=d-.35;if(t<a||t>d)return 0;const fi=Math.min(1,(t-a)/.4),fo=Math.min(1,Math.max(0,(d-t)/.35));return ease(Math.min(fi,fo));}
-function timeline(d,plain){const k=d.k,n=k.length,seg=[],ch=i=>plain?0:(k[i].cue?CUEH:0);
+/* koç çizgisi bekleme süresi etiket uzunluğuna göre: 2.2 + 0.05 × karakter, 2.5–4.5 sn */
+const CUE_LEN={plumb:10,'ang:elb':11,'ang:hip':11,'ang:knee':8,'ang:sh':9,line:10,kline:13,stack:7,scap:9,dep:10,bel:9,headfwd:16,fdep:10,fshift:14,fwide:10};
+function cueH(p){const n=(p.cue||[]).reduce((s,c)=>s+(CUE_LEN[c]||10),0);return Math.max(2.5,Math.min(4.5,2.2+.05*n));}const CUEH=4.5;function cueOp(t,d,on){if(!on)return 0;const a=.45,b=d-.35;if(t<a||t>d)return 0;const fi=Math.min(1,(t-a)/.4),fo=Math.min(1,Math.max(0,(d-t)/.35));return ease(Math.min(fi,fo));}
+function timeline(d,plain){const k=d.k,n=k.length,seg=[],ch=i=>plain?0:(k[i].cue?cueH(k[i]):0);
   for(let i=0;i<n;i++){seg.push({a:i,b:i,d:(k[i].hold??.8)+ch(i)}); if(i<n-1) seg.push({a:i,b:i+1,d:k[i].go??1.2});}
   for(let i=n-1;i>0;i--){if(i<n-1) seg.push({a:i,b:i,d:(k[i].hold??.8)+ch(i)}); seg.push({a:i,b:i-1,d:k[i].back??1.2});}
   return seg;}
@@ -894,7 +896,7 @@ function phaseOf(d,time){const P=tlOf(d,1).tot,M=tlOf(d,0).tot,su=setupOf(d),L=s
 function segAt(d,time){const m=phaseOf(d,time);if(m.ph==='setup')return{a:0,b:0,t:0};const {sg,tot}=tlOf(d,m.ph==='plain');
   let t=m.t%tot;for(const s of sg){if(t<=s.d) return s.a===s.b?{a:s.a,b:s.a,t:0}:{a:s.a,b:s.b,t:ease(t/s.d)};t-=s.d;}return{a:0,b:0,t:0};}
 function poseAt(d,time){const m=phaseOf(d,time);
-  if(m.ph==='setup'){const su=m.su,SD=suDur(su),tt=m.t,i=Math.min(su.length-1,Math.floor(tt/SD)),u=Math.min(1,(tt-i*SD)/SD);return{p:setupPose(d,su,i,u),cap:(i+1)+'/'+su.length+' · '+su[i].label,cop:0,su:{i,u,n:su.length,st:su[i],d}};}
+  if(m.ph==='setup'){const su=m.su,tt=m.t,q=suStep(su,tt),i=q.i,u=q.u;return{p:setupPose(d,su,i,u),cap:(i+1)+'/'+su.length+' · '+su[i].label,cop:0,su:{i,u,n:su.length,st:su[i],d}};}
   const r=poseAt0(d,m.t,m.ph==='plain');if(m.ph==='plain'){r.cop=0;r.plain=1;}return r;}
 function poseAt0(d,time,plain){const {sg:seg,tot}=tlOf(d,plain);
   let t=time%tot;for(const s of seg){if(t<=s.d) return s.a===s.b?{p:d.k[s.a],cap:d.k[s.a].cap,cop:cueOp(t,s.d,!!d.k[s.a].cue)}:{p:mix(d.k[s.a],d.k[s.b],ease(t/s.d)),cap:(t/s.d<.5?d.k[s.a]:d.k[s.b]).cap};t-=s.d;}return{p:d.k[0],cap:d.k[0].cap};}
@@ -984,7 +986,7 @@ function svgFor(d,time){
     const dot=(q,r)=>`<circle cx="${F(q[0])}" cy="${F(Y(q[1]))}" r="${r}" fill="${OL}"/>`;
     const surf=h=>{if(h[1]<.06)return 1;return (d.props||[]).some(q=>(q[0]==='box'&&h[0]>q[1]-.03&&h[0]<q[2]+.03&&Math.abs(h[1]-q[3])<.05)||(q[0]==='blk'&&h[0]>q[1]-.03&&h[0]<q[2]+.03&&Math.abs(h[1]-q[4])<.05)||(q[0]==='chair'&&h[0]>q[1]-.03&&h[0]<q[2]+.03&&Math.abs(h[1]-q[3])<.05))?1:0;};
     const hand=(e,h,st,col)=>{if(st==='n'||(d.d7&&d.d7.fing))return dot(h,.02);
-      if(surf(h)){if(d.ho){return `<ellipse cx="${F(h[0])}" cy="${F(Y(h[1]+.012))}" rx=".05" ry=".018" fill="${col}"/>`+ln(h,[h[0]+(p.facing??1)*.035,h[1]],col,.05)+dot(h,.02);}let dir=typeof st==='number'?st:0;if(!dir&&J.bk){const c=[-J.bk[0],-J.bk[1]],dn=[J.P[0]-J.T[0],J.P[1]-J.T[1]],o0=J.arms.find(a=>a[1]===h),ua=o0?[o0[0][0]-o0[3][0],o0[0][1]-o0[3][1]]:dn,th=Math.atan2(dn[0]*ua[1]-dn[1]*ua[0],dn[0]*ua[0]+dn[1]*ua[1]),ax=c[0]*Math.cos(th)-c[1]*Math.sin(th);dir=Math.abs(ax)>.25?Math.sign(ax):(p.facing??1);}if(!dir)dir=p.facing??1;return ln(h,[h[0]+dir*.1,h[1]],col,.055)+dot(h,.02);}
+      if(surf(h)){if(d.ho){return `<ellipse cx="${F(h[0])}" cy="${F(Y(h[1]+.012))}" rx=".05" ry=".018" fill="${col}"/>`+ln(h,[h[0]+(d.ho<0?-1:1)*(p.facing??1)*.035,h[1]],col,.05)+dot(h,.02);}let dir=typeof st==='number'?st:0;if(!dir&&J.bk){const c=[-J.bk[0],-J.bk[1]],dn=[J.P[0]-J.T[0],J.P[1]-J.T[1]],o0=J.arms.find(a=>a[1]===h),ua=o0?[o0[0][0]-o0[3][0],o0[0][1]-o0[3][1]]:dn,th=Math.atan2(dn[0]*ua[1]-dn[1]*ua[0],dn[0]*ua[0]+dn[1]*ua[1]),ax=c[0]*Math.cos(th)-c[1]*Math.sin(th);dir=Math.abs(ax)>.25?Math.sign(ax):(p.facing??1);}if(!dir)dir=p.facing??1;return ln(h,[h[0]+dir*.1,h[1]],col,.055)+dot(h,.02);}
       return `<circle cx="${F(h[0])}" cy="${F(Y(h[1]))}" r=".037" fill="${col}" stroke="${OL}" stroke-width=".015"/>`;};
     if(part&1) J.legs.forEach(([k,f,fr,st,o0])=>{if(fr===far){const t=foot(k,f,st);o+=seg2(o0,k,col,.12)+seg2(k,f,col,.09)+ln(f,t,col,.06)+dot(k,.03)+dot(f,.022)+(far?'':dot(o0,.028));}});
     if(part&2) J.arms.forEach(([e,h,fr,o0,hs])=>{if(fr===far) o+=seg2(o0,e,col,.085)+seg2(e,h,col,.07)+hand(e,h,hs,col)+dot(e,.026)+(far?'':dot(o0,.026));});return o;};
@@ -4109,8 +4111,12 @@ const CUE_FAM={"plank": [{"part": "hands", "label": "Eller omuz altında, eller 
 const CUE_LAD={"PL_LEAN": "planche_lean", "PL_TUCK": "planche_lean", "PL_PUSH": "planche_lean", "PL": "planche_lean", "PL_BENT": "bent_balance", "HS": "handstand", "HS_BAL": "handstand", "HS_LINE": "handstand", "HS_SHIFT": "handstand", "HS_ENTRY": "handstand", "PWALL": "handstand", "HS_PARA": "parallette", "PPU": "pike_push", "PPU_HSPU": "pike_push", "DIP": "dip", "PU_VERT": "hang_pull", "PU_CHIN": "hang_pull", "PU_ISO": "hang_pull", "PU_GRIP": "hang_pull", "PU_LAT": "straight_arm_lat", "PU_SHLD": "shoulder_prehab", "LSIT": "lsit", "COMP": "lsit", "LS_COMP": "lsit", "LS_TUCK": "lsit", "LS_HOLD": "lsit", "LS_CROSS": "lsit", "LS_STRADDLE": "lsit", "LS_ACTIVE": "active_flex", "LS_HANG": "hang_legraise", "CORE_HOLLOW": "hollow", "CORE_PELVIS": "hollow", "CORE_ARCH": "arch", "PRESS": "press", "PR_STRAD": "press", "PR_LEAN": "press", "PR_TUCK": "press", "PR_COMP": "press", "PR_WALL": "press", "PR_HEAD": "headstand", "LG_QUAD": "single_leg", "LG_KNEE": "knee_quad", "LG_HINGE": "hinge", "LG_NORDIC": "nordic"};
 const CUE_LVL={"ST:scapular push ups": {"fam": "plank", "key": {"1": ["headfwd"]}}, "HS_BAL:1": {"fam": "headstand"}, "HS_BAL:2": {"fam": "bent_balance", "note": "frog stand: dizler dirsek dışında"}, "HS_BAL:3": {"add": [{"part": "fingers", "label": "Parmak uçlarıyla it, avuç hafif kalkar", "short": "parmak ucu", "inset": "hands-pressure"}]}, "HS_LINE:1": {"fam": "pike_push", "only": ["hands", "arm", "ribs", "pelvis", "scap"], "note": "pike shrug: sadece omuz kulağa-aşağı"}, "HS_LINE:6": {"add": [{"part": "hands", "label": "Eller duvara 10–20 cm, göğüs duvarda", "short": "el duvara yakın"}]}, "PU_CHIN": {"override": {"hands": {"part": "hands", "label": "Avuç sana dönük (supine), omuz genişliği/dar", "short": "avuç sana", "inset": "grip-underhand"}}}, "PU_CHIN:6": {"override": {"hands": {"part": "hands", "label": "Karışık tutuş: bir avuç dışa bir avuç içe", "short": "karışık tutuş", "inset": "grip-mixed"}}}, "PU_CHIN:9": {"override": {"hands": {"part": "hands", "label": "Commando: eller bar boyunca, avuçlar karşılıklı", "short": "commando", "inset": "grip-commando"}}}, "PU_VERT:5": {"override": {"hands": {"part": "hands", "label": "Avuç sana dönük (chin-up)", "short": "avuç sana", "inset": "grip-underhand"}}}, "PU_VERT:9": {"override": {"hands": {"part": "hands", "label": "Geniş tutuş: omzun 1,5 katı, avuç dışa", "short": "geniş tutuş", "inset": "grip-wide"}}}, "PU_VERT:11": {"add": [{"part": "legs", "label": "L-sit: bacaklar yatay, diz kilitli", "short": "bacak yatay"}]}, "PU_VERT:12": {"add": [{"part": "arm", "label": "Okçu: yan kol düz, çeken kol bükük", "short": "okçu kol"}]}, "PU_GRIP":{"drop":["arm"]},"DIP:1":{"drop":["arm2"]},"DIP:2":{"drop":["arm2"]},"PU_GRIP:3": {"override": {"hands": {"part": "hands", "label": "Bir el barda overhand, bir el havluda (çekiç tutuş)", "short": "havlu tutuş", "inset": "grip-towel"}}}, "PU_GRIP:5": {"override": {"hands": {"part": "hands", "label": "İki havlu: çekiç tutuş, avuçlar karşılıklı", "short": "havlu tutuş", "inset": "grip-towel"}}}, "PL_BENT:5": {"note": "elbow lever", "add": [{"part": "arm", "label": "Dirsekleri karın yanına, kalça kemiği üstüne", "short": "dirsek kalçada"}]}, "PL_LEAN:1": {"override": {"legs": {"part": "legs", "label": "Dizler yerde, ayak üstleri yerde", "short": "diz yerde"}}}, "PL_LEAN:3": {"override": {"hands": {"part": "hands", "label": "Parallette nötr tutuş, bilek düz", "short": "nötr tutuş", "inset": "grip-parallette"}}}, "PL_TUCK": {"add": [{"part": "knees", "label": "Dizler göğse, kalça omuz hizasına kalkar", "short": "diz göğse"}]}, "DIP:9": {"add": [{"part": "legs", "label": "L-sit: bacaklar yatay, diz kilitli", "short": "bacak yatay"}]}, "DIP:10": {"note": "Russian dip: önkola inip tekrar it; dirsek arkada"}, "LS_HANG:2": {"add": [{"part": "pelvis", "label": "Kuyruk sokumunu yukarı kıvır", "short": "kuyruk kıvrık", "type": "rot"}]}, "LS_CROSS": {"override": {"legs": {"part": "legs", "label": "Bağdaş: ayak bilekleri çapraz, dizler yana", "short": "bağdaş"}}}, "LS_STRADDLE": {"override": {"legs": {"part": "legs", "label": "Bacaklar geniş açık, dizler tavana, ayak ucu sivri", "short": "straddle", "inset": "straddle-top"}}}, "LS_TUCK": {"override": {"legs": {"part": "legs", "label": "Dizler göğse yakın, ayaklar bitişik", "short": "tuck"}}}, "CORE_HOLLOW:10": {"fam": "plank", "note": "body saw: önkol plank, omuz önüne kayar"}, "LG_KNEE:1": {"note": "duvar oturuşu: diz 90°, sırt duvarda düz"}, "LG_HINGE:1": {"only": ["feet", "pelvis", "neck"]}, "LG_HINGE:2": {"only": ["feet", "pelvis", "pelvis2", "neck"]}, "LG_HINGE:3": {"only": ["feet", "pelvis", "pelvis2", "neck"]}, "LG_QUAD:12": {"add": [{"part": "legs", "label": "Serbest bacak düz önde, ayak flex", "short": "serbest bacak önde"}]}, "LG_QUAD:11": {"add": [{"part": "legs", "label": "Arka diz bükük, ayak elde", "short": "arka ayak elde"}]}};
 
-function suDur(su){return su.length>5?2.7:3.1;}
-function suLen(su){return su.length*suDur(su)+.4;}
+/* adım süresi okunacak yazıya göre: 1.6 sn + 0.055 sn × (tam cümle + kısa etiket), inset +0.8 sn; 2.2–6 sn */
+function suStepDur(s){return Math.max(2.2,Math.min(6,1.6+.055*(((s&&s.label)||'').length+((s&&s.short)||'').length)+(s&&s.inset?.8:0)));}
+function suTimes(su){if(su._tm&&su._tm.n===su.length)return su._tm;let t=0;const st=su.map(s=>{const d=suStepDur(s),o={t0:t,d};t+=d;return o;});su._tm={st,end:t,n:su.length};return su._tm;}
+function suStep(su,tt){const T=suTimes(su).st;let i=0;while(i<T.length-1&&tt>=T[i].t0+T[i].d)i++;return{i,u:Math.max(0,Math.min(1,(tt-T[i].t0)/T[i].d)),t0:T[i].t0,d:T[i].d};}
+function suDur(su){return suTimes(su).end/su.length;}
+function suLen(su){return suTimes(su).end+.4;}
 /* bölgeye göre varsayılan poz sapması (kurulum başında hata → adımda düzelir) */
 function defMod(fam,s){const l=(s.label||'')+' '+(s.short||'');
   switch(s.part){
@@ -4507,7 +4513,7 @@ function suOcc(d,p){const J=joints(p),pts=[J.head,J.T,J.P,...J.arms.flatMap(a=>[
   if(J.arms.length&&J.arms.every(a=>a[1][1]>J.head[1])){const y=J.arms[0][1][1],xs=J.arms.map(a=>a[1][0]);for(let x=Math.min(...xs)-.6;x<=Math.max(...xs)+.6;x+=.1)pts.push([x,y]);}
   (d.props||[]).forEach(q=>{if(q[0]==='wall')for(let y=0;y<=q[2];y+=.15)pts.push([q[1],y]);if(q[0]==='box'){pts.push([q[1],q[3]],[q[2],q[3]]);}});return pts;}
 function setupPose(d,su,i,u){const p=Object.assign({},d.k[0]);delete p.cue;p.hands=p.hands.map(h=>h.slice());p.feet=p.feet.map(f=>f.slice());const fa=p.facing??1;
-  su.forEach((s,j)=>{if(!s.mod||j!==i)return;const w=u<.12?1:1-ease(Math.min(1,(u-.12)/.55));if(!w)return;
+  su.forEach((s,j)=>{if(!s.mod||j!==i)return;const w=u<.1?ease(u/.1):u<.15?1:1-ease(Math.min(1,(u-.15)/.42));if(!w)return;
     Object.entries(s.mod).forEach(([k,v])=>{
       if(k==='pd'){const a=-v*w*RD0*fa,c=Math.cos(a),sn=Math.sin(a),rot=q=>[p.S[0]+(q[0]-p.S[0])*c-(q[1]-p.S[1])*sn,p.S[1]+(q[0]-p.S[0])*sn+(q[1]-p.S[1])*c];
         const P2=rot(p.P),dP=[P2[0]-p.P[0],P2[1]-p.P[1]];p.P=P2;p.feet=p.feet.map(f=>footFree(d,f)?[f[0]+dP[0],f[1]+dP[1],...f.slice(2)]:f);}
@@ -4520,7 +4526,7 @@ function setupPose(d,su,i,u){const p=Object.assign({},d.k[0]);delete p.cue;p.han
       else if(k==='er'){p._er=Math.max(p._er||0,w);}
       else p[k]=(p[k]||0)+v*w;});});return p;}
 /* kurulum katmanı: vurgu + kısa etiket (çizgiyle bölgeye bağlı) + köşe inseti */
-function setupSvg(su,p,J,b){const st=su.st,A='var(--accent)',Y=y=>-y,fi=ease(Math.min(1,su.u*3)),fo=su.u>.9?ease((1-su.u)*10):1,op=Math.min(fi,fo);let o='';
+function setupSvg(su,p,J,b){const st=su.st,A='var(--accent)',Y=y=>-y,SDu=suStepDur(su.st),fq=.25/SDu,fi=ease(Math.min(1,su.u/fq)),fo=su.u>1-fq?ease(Math.max(0,(1-su.u)/fq)):1,op=Math.min(fi,fo);let o='';
   const FS=Math.max(.075,Math.min(.16,b.h*.05)),arm=J.arms[J.arms.length-1],leg=J.legs[J.legs.length-1],FR=!!p.front;
   const L=(a,c,w,ex='')=>`<line x1="${F(a[0])}" y1="${F(Y(a[1]))}" x2="${F(c[0])}" y2="${F(Y(c[1]))}" stroke="${A}" stroke-width="${w}" stroke-linecap="round" ${ex}/>`;
   const ring=(q,r)=>`<circle cx="${F(q[0])}" cy="${F(Y(q[1]))}" r="${r}" fill="${A}" fill-opacity=".16" stroke="${A}" stroke-width=".018"/>`;
@@ -4566,6 +4572,20 @@ const INSET={},INSET_LOW={'arm-front':1};
  const ln=(a,b,c,d,col,w,ex='')=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="${col}" stroke-width="${w}" stroke-linecap="round" ${ex}/>`;
  const ar=(x1,y1,x2,y2,col=A,w=2)=>{const dx=x2-x1,dy=y2-y1,l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l;return ln(x1,y1,x2-ux*4,y2-uy*4,col,w)+`<path d="M${x2} ${y2} L${(x2-ux*6-uy*3.5).toFixed(1)} ${(y2-uy*6+ux*3.5).toFixed(1)} L${(x2-ux*6+uy*3.5).toFixed(1)} ${(y2-uy*6-ux*3.5).toFixed(1)} Z" fill="${col}"/>`;};
  const X=(x,y)=>ln(x-4,y-4,x+4,y+4,'#c0392b',2)+ln(x-4,y+4,x+4,y-4,'#c0392b',2),OK=(x,y)=>`<path d="M${x-4} ${y} L${x-1} ${y+3} L${x+4} ${y-4}" fill="none" stroke="var(--ok,#2a8150)" stroke-width="2.2" stroke-linecap="round"/>`;
+ /* kol: üst kol (kalın, omuzda deltoid) + önkol (ince) ayrı segment; dirsekte beyaz eklem noktası, dirsek ucu (olecranon) çıkıntısı, dirsek içi (fossa) turuncu oval.
+    o.side: düz kolda dirsek içinin baktığı yön [x,y]; o.face=1: dirsek içi izleyiciye bakar (önden görünüş); o.noOle / o.noFos */
+ const armS=(sh,el,wr,o={})=>{const wU=o.wU||7,wF=o.wF||wU*.74,u1=[el[0]-sh[0],el[1]-sh[1]],l1=Math.hypot(...u1)||1,U1=[u1[0]/l1,u1[1]/l1];let s='';
+   const hasF=wr&&(Math.hypot(wr[0]-el[0],wr[1]-el[1])>.5),U2=hasF?(()=>{const v=[wr[0]-el[0],wr[1]-el[1]],l=Math.hypot(...v)||1;return[v[0]/l,v[1]/l];})():U1;
+   let n=[U2[0]-U1[0],U2[1]-U1[1]];const nl=Math.hypot(...n);if(nl<.15)n=o.side||[-U1[1],U1[0]];else n=[n[0]/nl,n[1]/nl];{const l=Math.hypot(...n)||1;n=[n[0]/l,n[1]/l];}
+   const bent=nl>=.15,ang=Math.round(Math.acos(Math.max(-1,Math.min(1,-(U1[0]*U2[0]+U1[1]*U2[1]))))/RD0);
+   s+=ln(sh[0],sh[1],el[0],el[1],I,wU);if(hasF)s+=ln(el[0],el[1],wr[0],wr[1],I,wF);
+   s+=`<circle cx="${sh[0]}" cy="${sh[1]}" r="${(wU*.72).toFixed(2)}" fill="${I}"/>`;/* deltoid */
+   if(!o.noOle){const q=[el[0]-n[0]*wU*.5,el[1]-n[1]*wU*.5];s+=`<circle cx="${q[0].toFixed(2)}" cy="${q[1].toFixed(2)}" r="${(wU*.36).toFixed(2)}" fill="${I}"/>`;}
+   s+=`<circle cx="${el[0]}" cy="${el[1]}" r="${(wU*.34).toFixed(2)}" fill="var(--surface,#fff)"/><circle cx="${el[0]}" cy="${el[1]}" r="${(wU*.15).toFixed(2)}" fill="${I}"/>`;/* eklem */
+   if(!o.noFos){if(o.face)s+=`<ellipse cx="${el[0]}" cy="${(el[1]+wU*.62).toFixed(2)}" rx="${(wU*.42).toFixed(2)}" ry="${(wU*.26).toFixed(2)}" fill="${A}"/>`;
+     else{const q=[el[0]+n[0]*wU*.36,el[1]+n[1]*wU*.36],rot=Math.atan2(U1[1]+U2[1],U1[0]+U2[0])/RD0;s+=`<ellipse cx="${q[0].toFixed(2)}" cy="${q[1].toFixed(2)}" rx="${(wU*.34).toFixed(2)}" ry="${(wU*.2).toFixed(2)}" transform="rotate(${rot.toFixed(1)} ${q[0].toFixed(2)} ${q[1].toFixed(2)})" fill="${A}"/>`;}}
+   if(o.angle&&bent)s+=`<text x="${(el[0]+n[0]*wU*1.6).toFixed(1)}" y="${(el[1]+n[1]*wU*1.6+2).toFixed(1)}" font-size="5.2" font-weight="800" font-family="system-ui,sans-serif" text-anchor="middle" fill="${A}">${ang}°</text>`;
+   return s;};
  /* üstten el (sırtı görünür): side -1 sol, +1 sağ; parmaklar yukarı, başparmak içe */
  const hand=(cx,cy,side,rot=0,sc=1)=>{let s=`<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${sc})"><path d="M-8 6 Q-9 -6 -7 -8 L7 -8 Q9 -6 8 6 Q7 13 0 14 Q-7 13 -8 6 Z" fill="${I}"/>`;
    [[-5.6,-8,-6,13],[-1.9,-8,-2,15],[1.9,-8,2,14.5],[5.6,-8,6,11.5]].forEach(([x0,y0,ang,len])=>{const fx=side>0?x0:-x0,fa=(side>0?ang:-ang)*RD0;s+=ln(fx,y0,(fx+Math.sin(fa)*len).toFixed(1),(y0-Math.cos(fa)*len).toFixed(1),I,3.3);});
@@ -4580,16 +4600,16 @@ const INSET={},INSET_LOW={'arm-front':1};
  INSET['hands-lsit']=()=>{let g=`<ellipse cx="50" cy="44" rx="13" ry="8" fill="${I}" opacity=".25"/>`+t_(50,30,'kalça',M,6.5)+hand(26,42,-1,-15)+hand(74,42,1,15);return g+ar(94,62,94,22)+t_(91,17,'ileri',A,6.5)+t_(50,71,'eller kalça yanında',A,7)+t_(50,79,'üstten',M,6.5);};
  INSET['hands-pressure']=()=>{let g=`<path d="M14 52 L58 52 Q66 52 72 46 L86 46" fill="none" stroke="${I}" stroke-width="9" stroke-linecap="round"/>`+ln(6,58,94,58,PR,1.5);
    g+=ar(22,28,22,47)+t_(22,22,'avuç tabanı',A,6.5)+ar(84,28,84,41)+t_(80,22,'parmak ucu',A,6.5);return g+t_(50,72,'öne düşerken parmakla bastır',A,6.8)+t_(50,79,'yandan el',M,6.5);};
- INSET['arm-front']=()=>{const arms=(ox,after)=>{let s='';[-1,1].forEach(sd=>{const x=ox+sd*11;s+=ln(x,12,x,40,I,7)+ln(x,42,x,64,I,6)+`<circle cx="${x}" cy="11" r="5" fill="${I}"/>`;
-     s+=after?`<ellipse cx="${x}" cy="41" rx="3.2" ry="2.3" fill="${A}"/>`:`<ellipse cx="${x-sd*3.2}" cy="41" rx="1.2" ry="2.3" fill="${A}"/>`;
-     if(after)s+=`<path d="M${x+sd*4} 22 Q${x} 31 ${x+sd*6} 23" fill="none" stroke="${A}" stroke-width="1.8"/><path d="M${x+sd*8.5} 20.5 L${x+sd*3.6} 21.5 L${x+sd*6.6} 26.5 Z" fill="${A}"/>`;});return s+ln(ox-20,66,ox+20,66,PR,1.2);};
-   return arms(26,0)+arms(74,1)+ar(45,38,58,38)+t_(26,74,'önce',M,7)+t_(74,74,'sonra',A,7)+t_(50,80,'dirsek içi: içe → öne',M,5.8);};
- INSET['elbow-tuck']=()=>{const fig=(ox,ok)=>{let s=`<circle cx="${ox}" cy="16" r="5" fill="${I}"/>`+ln(ox-12,30,ox+12,30,I,5)+ln(ox,30,ox,58,I,9);const a=ok?40:88;
-     [-1,1].forEach(sd=>{const ex=ox+sd*12+sd*14*Math.sin(a*RD0)*.0,ey=30;const e=[ox+sd*(12+12*Math.sin(a*RD0)),30+12*Math.cos(a*RD0)];s+=ln(ox+sd*12,30,e[0].toFixed(1),e[1].toFixed(1),I,4.5);});
+ INSET['arm-front']=()=>{const arms=(ox,after)=>{let s='';[-1,1].forEach(sd=>{const x=ox+sd*11;
+     s+=armS([x,12],[x,38],[x,62],after?{wU:7,face:1,noOle:1}:{wU:7,side:[-sd,0]});
+     if(after)s+=`<path d="M${x+sd*4} 22 Q${x} 31 ${x+sd*6} 23" fill="none" stroke="${A}" stroke-width="1.8"/><path d="M${x+sd*8.5} 20.5 L${x+sd*3.6} 21.5 L${x+sd*6.6} 26.5 Z" fill="${A}"/>`;});return s+ln(ox-20,64,ox+20,64,PR,1.2);};
+   return arms(26,0)+arms(74,1)+ar(45,38,58,38)+t_(26,74,'önce: içe',M,7)+t_(74,74,'sonra: öne',A,7)+t_(50,80,'turuncu = dirsek içi',M,5.8);};
+ INSET['elbow-tuck']=()=>{const fig=(ox,ok)=>{let s=`<circle cx="${ox}" cy="16" r="5" fill="${I}"/>`+ln(ox-12,28,ox+12,28,I,5)+ln(ox,28,ox,58,I,9);const a=ok?40:88;
+     [-1,1].forEach(sd=>{const e=[ox+sd*(12+13*Math.sin(a*RD0)),28+13*Math.cos(a*RD0)];s+=armS([ox+sd*12,28],[+e[0].toFixed(1),+e[1].toFixed(1)],null,{wU:5.5,noFos:1,side:[sd*Math.cos(a*RD0)*-1,Math.sin(a*RD0)]});});
      return s+(ok?OK(ox+15,60):X(ox+15,60));};return fig(28,true)+fig(72,false)+t_(28,79,'dirsek ~45° geri',A,6.5)+t_(72,79,'90° yana',M,6.5)+t_(50,8,'üstten',M,6);};
- INSET['er-front']=()=>{let g=ln(50,14,50,40,I,7)+`<circle cx="50" cy="12" r="5" fill="${I}"/>`+ln(50,40,24,40,I,6)+ln(50,40,76,40,I,6,'stroke-opacity=".3" stroke-dasharray="4 3"');
+ INSET['er-front']=()=>{let g=`<circle cx="50" cy="9" r="5" fill="${I}"/>`+armS([50,16],[50,40],[24,40],{wU:7,angle:1})+ln(50,40,76,40,I,5,'stroke-opacity=".25" stroke-dasharray="4 3"');
    g+=`<path d="M30 28 A22 22 0 0 1 70 28" fill="none" stroke="${A}" stroke-width="1.8"/><path d="M72 31 L66 26 L72 24 Z" fill="${A}"/>`;return g+t_(50,62,'dirsek 90°, gövdede sabit',A,7)+t_(50,72,'ön kol dışa döner',M,6.5)+t_(50,80,'önden',M,6);};
- INSET['wrist-lean']=()=>{let g=ln(10,64,90,64,PR,1.5)+ln(40,64,58,24,I,7)+`<circle cx="58" cy="22" r="6" fill="${I}"/>`+ln(40,64,40,16,A,1.3,'stroke-dasharray="3 2.5"')+ar(40,24,56,24);
+ INSET['wrist-lean']=()=>{let g=ln(10,64,90,64,PR,1.5)+armS([58,24],[49,44],[40,63],{wU:7,side:[.9,.4]})+ln(40,64,40,16,A,1.3,'stroke-dasharray="3 2.5"')+ar(40,24,56,24);
    return g+t_(82,40,'omuz önde',A,7)+t_(40,12,'bilek',M,6)+t_(50,76,'yandan · omuz bileğin önünde',M,6.3);};
  const bar=(y=18)=>ln(6,y,94,y,PR,4);
  const grip=(x,under,thumbAround=true)=>{let s=`<rect x="${x-7}" y="12" width="14" height="22" rx="5" fill="${I}"/>`+ln(x,34,x,64,I,7);
@@ -4598,7 +4618,7 @@ const INSET={},INSET_LOW={'arm-front':1};
     underhand = avuç görünür, parmaklar barın arkasından sarar, başparmak dışta önden sarar. side: -1 sol el, +1 sağ el */
  const gH=(cx,side,under,y0=24)=>{let s='';const sg=side>0?1:-1;
    s+=ln(cx-22,y0,cx+22,y0,PR,6);
-   s+=`<rect x="${cx-5}" y="${y0+17}" width="10" height="20" rx="4" fill="${I}"/>`;/* önkol */
+   s+=armS([cx,y0+48],[cx,y0+34],[cx,y0+16],under?{wU:9,wF:8,face:1,noOle:1}:{wU:9,wF:8,noFos:1,side:[0,1]});/* önkol + dirsek (overhand: dirsek ucu, underhand: dirsek içi görünür) */
    s+=`<rect x="${cx-9}" y="${y0+2}" width="18" height="18" rx="7" fill="${I}"/>`;/* el */
    if(!under){/* parmaklar barın üstünden öteye kıvrılır: sadece bar kalınlığı kadar görünür; eklemler barın altında */
      [-6,-2,2,6].forEach(q=>{s+=`<rect x="${cx+q*sg-1.9}" y="${y0-4}" width="3.8" height="9" rx="1.9" fill="${I}"/>`+`<circle cx="${cx+q*sg}" cy="${y0+5}" r="1.1" fill="var(--surface,#fff)" opacity=".8"/>`;});
@@ -4612,13 +4632,13 @@ const INSET={},INSET_LOW={'arm-front':1};
  INSET['grip-underhand']=()=>gH(28,-1,true)+gH(72,1,true)+t_(50,72,'underhand: avuç sana',A,6.6)+t_(50,79,'kendi gözünden · başparmak dışta',M,5.8);
  INSET['grip-mixed']=()=>gH(28,-1,false)+gH(72,1,true)+t_(28,72,'sırt sana',A,6.2)+t_(72,72,'avuç sana',A,6.2)+t_(50,79,'karışık tutuş',M,5.8);
  INSET['grip-thumb']=()=>`<g transform="translate(8 -6)">`+gH(50,1,false,18)+`</g>`+ln(40,30,26,22,A,1.2)+t_(17,20,"başparmak",A,6.2)+t_(50,72,'bar avuç tabanında',A,6.4)+t_(50,79,'yakın plan',M,5.6);
- INSET['grip-wide']=()=>bar()+grip(14,false)+grip(86,false)+`<circle cx="50" cy="40" r="6" fill="${I}"/>`+ln(38,52,62,52,I,6)+ar(40,44,18,44)+ar(60,44,82,44)+t_(50,74,'omzun ~1,5 katı',A,7)+t_(50,80,'önden',M,6);
+ INSET['grip-wide']=()=>bar()+`<rect x="7" y="12" width="14" height="14" rx="5" fill="${I}"/><rect x="79" y="12" width="14" height="14" rx="5" fill="${I}"/>`+armS([38,50],[24,38],[14,24],{wU:6,side:[1,0]})+armS([62,50],[76,38],[86,24],{wU:6,side:[-1,0]})+`<circle cx="50" cy="44" r="6" fill="${I}"/>`+ln(38,52,62,52,I,6)+t_(50,72,'omzun ~1,5 katı',A,7)+t_(50,79,'önden',M,6);
  INSET['grip-commando']=()=>ln(50,6,50,74,PR,4)+`<rect x="41" y="18" width="18" height="14" rx="5" fill="${I}"/><rect x="41" y="38" width="18" height="14" rx="5" fill="${I}"/>`+t_(78,30,'eller art arda',A,6.5)+t_(50,80,'üstten · bar boyunca',M,6);
- INSET['grip-towel']=()=>bar(10)+ln(36,10,36,40,'var(--towel,#d9913a)',6)+ln(64,10,64,40,'var(--towel,#d9913a)',6)+`<rect x="29" y="26" width="14" height="16" rx="5" fill="${I}"/><rect x="57" y="26" width="14" height="16" rx="5" fill="${I}"/>`+ln(36,42,36,64,I,6)+ln(64,42,64,64,I,6)+t_(50,74,'havlu: çekiç tutuş',A,7)+t_(50,80,'önden · avuçlar karşılıklı',M,6);
- INSET['grip-parallette']=()=>`<path d="M20 64 L32 30 L68 30 L80 64" fill="none" stroke="${PR}" stroke-width="4"/>`+`<rect x="38" y="22" width="24" height="14" rx="6" fill="${I}"/>`+ln(50,36,50,10,I,7,'stroke-opacity=".9"')+ln(44,22,44,12,I,3)+t_(50,74,'nötr tutuş, bilek düz',A,7)+t_(50,80,'yandan · avuç içe bakar',M,6);
- INSET['grip-dip']=()=>ln(10,30,90,30,PR,4)+`<rect x="40" y="22" width="20" height="14" rx="6" fill="${I}"/>`+ln(50,36,50,64,I,7)+t_(50,74,'nötr tutuş, el gövde yanında',A,7)+t_(50,80,'yandan',M,6);
- INSET['hang-active']=()=>{const fig=(ox,act)=>{const sy=act?30:22;return ln(ox-16,8,ox+16,8,PR,3)+ln(ox-9,8,ox-9,sy,I,4)+ln(ox+9,8,ox+9,sy,I,4)+`<circle cx="${ox}" cy="${act?24:28}" r="5" fill="${I}"/>`+ln(ox-9,sy,ox+9,sy,I,5)+ln(ox,sy,ox,62,I,8)+(act?ar(ox+14,24,ox+14,36):'');};
-   return fig(28,false)+fig(72,true)+t_(28,72,'pasif',M,7)+t_(72,72,'aktif',A,7)+t_(50,80,'omuz kulaktan uzak',A,6.5);};
+ INSET['grip-towel']=()=>bar(10)+ln(36,10,36,30,'var(--towel,#d9913a)',6)+ln(64,10,64,30,'var(--towel,#d9913a)',6)+armS([38,66],[37,50],[36,36],{wU:6.5,noOle:1,side:[1,0]})+armS([62,66],[63,50],[64,36],{wU:6.5,noOle:1,side:[-1,0]})+`<rect x="29" y="24" width="14" height="16" rx="5" fill="${I}"/><rect x="57" y="24" width="14" height="16" rx="5" fill="${I}"/>`+t_(50,72,'havlu: çekiç tutuş',A,7)+t_(50,79,'önden · avuçlar karşılıklı',M,6);
+ INSET['grip-parallette']=()=>`<path d="M20 64 L32 34 L68 34 L80 64" fill="none" stroke="${PR}" stroke-width="4"/>`+armS([50,2],[50,17],[50,28],{wU:7,side:[1,0]})+`<rect x="38" y="26" width="24" height="14" rx="6" fill="${I}"/>`+ln(44,26,44,18,I,3)+t_(76,16,'dirsek kilit',A,6.2)+t_(50,72,'nötr tutuş, bilek düz',A,7)+t_(50,79,'yandan · avuç içe bakar',M,6);
+ INSET['grip-dip']=()=>ln(10,40,90,40,PR,4)+armS([50,6],[50,22],[50,34],{wU:7,side:[1,0]})+`<rect x="40" y="32" width="20" height="14" rx="6" fill="${I}"/>`+t_(76,22,'dirsek kilit',A,6.2)+t_(50,72,'nötr tutuş, el gövde yanında',A,7)+t_(50,79,'yandan',M,6);
+ INSET['hang-active']=()=>{const fig=(ox,act)=>{const sy=act?32:24;return ln(ox-17,8,ox+17,8,PR,3)+armS([ox-9,sy],[ox-9,(8+sy)/2+1],[ox-9,9],{wU:4.6,noOle:1,side:[1,0]})+armS([ox+9,sy],[ox+9,(8+sy)/2+1],[ox+9,9],{wU:4.6,noOle:1,side:[-1,0]})+`<circle cx="${ox}" cy="${act?25:29}" r="5" fill="${I}"/>`+ln(ox-9,sy,ox+9,sy,I,5)+ln(ox,sy,ox,62,I,8)+(act?ar(ox+16,24,ox+16,36):'');};
+   return fig(28,false)+fig(72,true)+t_(28,72,'pasif',M,7)+t_(72,72,'aktif',A,7)+t_(50,79,'omuz kulaktan uzak',A,6.5);};
  INSET['tripod-top']=()=>`<path d="M50 14 L26 50 L74 50 Z" fill="${A}" fill-opacity=".14" stroke="${A}" stroke-width="1.6" stroke-dasharray="3 2"/><circle cx="50" cy="14" r="7" fill="${I}"/>`+hand(26,50,-1,0,.7)+hand(74,50,1,0,.7)+t_(68,12,'baş',M,6)+t_(50,72,'baş + iki el = üçgen',A,7)+t_(50,80,'üstten',M,6);
  const foot=(x,y,r=0)=>`<g transform="translate(${x} ${y}) rotate(${r})"><path d="M-6 10 Q-8 -6 -3 -14 Q0 -17 4 -14 Q8 -6 6 10 Q0 14 -6 10 Z" fill="${I}"/></g>`;
  INSET['feet-top']=()=>foot(38,42,-4)+foot(62,42,4)+ln(30,24,70,24,M,1,'stroke-dasharray="2 2"')+ar(90,60,90,22)+t_(88,17,'ileri',A,6.5)+t_(50,72,'kalça genişliği, ayak ucu ileri',A,6.8)+t_(50,80,'üstten',M,6);
@@ -4776,6 +4796,7 @@ const AN0=(a,b,c)=>{const u=[a[0]-b[0],a[1]-b[1]],v=[c[0]-b[0],c[1]-b[1]];return
    if(Math.abs(tor-90)<16&&J.S[1]>a[1][1]+.4&&el>165){if(!p.sh)p.sh=.05;if(!p.lb)p.lb=.02;}});});
  Object.keys(DRAW).filter(k=>/^(HS_|PPU_HSPU:)/.test(k)).forEach(k=>{RS(DRAW[k]);fxBox(DRAW[k]);});
 }
+Object.keys(DRAW).forEach(k=>{if(/^(PL|PL_LEAN|PL_TUCK|PL_PUSH):/.test(k)&&!DRAW[k].ho)DRAW[k].ho=-1;});
 applyCues();
 
 /* kayıt */
@@ -4912,7 +4933,8 @@ function mediaHtml(lad,i,lv,one){const v=vidsOf(lv.key),ex=EXACT[lad+':'+i],nr=n
   return stageHtml(lad,i)+(v.length?vidLink(v[0])+(!one&&v[1]?vidLink(v[1],true):''):'')+(ex?exactLink(ex):'')+(!v.length&&nr?nearLink(nr):'');}
 function stageHtml(lad,i){const d=drawOf(lad,i);return d?`<div class="stage"><span class="tag">Hareket çizimi · ${d.view||(d.k.some(p=>p.front)?'önden':'yandan')}</span><div class="anim" data-draw="${lad}:${i}"></div><span class="cap" data-cap="${lad}:${i}">&nbsp;</span></div>`:'';}
 const T0=performance.now(); let lastCap={};
-function tick(now){document.querySelectorAll('[data-draw]').forEach(el=>{const d=DRAW[el.dataset.draw];const r=svgFor(d,(now-T0)/1000);el.innerHTML=r.svg;
+/* her çizimin saati, ekrana geldiği (ya da çizimi değiştiği) anda 0'dan başlar: önce sade tur, sonra kurulum */
+function tick(now){document.querySelectorAll('[data-draw]').forEach(el=>{const d=DRAW[el.dataset.draw];if(el._k!==el.dataset.draw||el._t0==null){el._k=el.dataset.draw;el._t0=now;}const r=svgFor(d,(now-el._t0)/1000);el.innerHTML=r.svg;
   if(r.cap){const c=el.parentNode.querySelector('[data-cap]');if(c&&c.textContent!==r.cap)c.textContent=r.cap;}});requestAnimationFrame(tick);}
 requestAnimationFrame(tick);
 function vidLink(v,alt){return ytA(v.id,'vid '+(alt?'alt':''),`<span class="play" aria-hidden="true"></span><span><b>${alt?'Başka açıdan izle':'Videoyu izle'} · ${v.lab?esc(v.lab):'1 dk'}</b><small>${esc(v.title)}${v.author?' — '+esc(v.author):''}</small></span>`,v.title,{wide:vWide(v)});}
