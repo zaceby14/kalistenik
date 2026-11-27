@@ -5086,16 +5086,27 @@ function gorScene(prof,cls){
       ${stand()}${limb('M84 96 Q62 124 80 146',22)}${fist(82,146,10,0)}${bust(60,20,120,false)}${swing}${ball}`);
   }
   if(prof==='feryat'){
-    /* çapa: iki el sapta, çapa kalkar ve toprağa iner; vuruşta toprak parçacıkları */
-    const D='1.8s',kt='0;.45;.62;.7;1';
-    const hoe=`<g>${A(`<animateTransform attributeName="transform" type="rotate" dur="${D}" repeatCount="indefinite" calcMode="spline" keyTimes="${kt}" keySplines=".4 0 .6 1;.8 0 .9 .6;.3 0 .7 1;.5 0 .5 1" values="0 120 98;-52 120 98;4 120 98;4 120 98;0 120 98"/>`)}
-      <path d="M118 128 L206 226" stroke="#8a5a2b" stroke-width="7" stroke-linecap="round"/><path d="M118 128 L206 226" stroke="#c48a4c" stroke-width="2" stroke-linecap="round" transform="translate(-1.5 -1)"/>
-      <path d="M198 214 L222 206 L232 234 L206 236z" fill="url(#${u}m)" stroke="#5d656f" stroke-width="1.5"/>
-      ${limb('M84 96 Q104 132 140 150',22)}${limb('M156 96 Q172 140 168 180',22)}${fist(140,151,10,48)}${fist(168,182,10,48)}</g>`;
-    const dirt=[[-14,-26],[-4,-34],[8,-30],[16,-22],[-20,-14],[22,-12]].map(([dx,dy],k)=>`<circle cx="212" cy="236" r="${3+(k%3)}" fill="${k%2?'#6b4423':'#8a5a2b'}" opacity="0">${A(`<animateTransform attributeName="transform" type="translate" dur="${D}" repeatCount="indefinite" keyTimes="0;.62;.9;1" values="0 0;0 0;${dx} ${dy};${dx} ${dy}"/><animate attributeName="opacity" dur="${D}" repeatCount="indefinite" keyTimes="0;.6;.64;.9;1" values="0;0;1;0;0"/>`)}</circle>`).join('');
-    return wrap('0 0 250 250',`<path d="M0 238 Q60 230 124 236 T250 234 V250 H0z" fill="#5a3a1e"/><path d="M190 236 q22 -12 44 0z" fill="#7a5130"/><path d="M0 238 Q60 230 124 236 T250 234" stroke="#3e2713" stroke-width="2" fill="none"/>
-      <path d="M30 232 l4 -14 l4 14M44 234 l3 -10 l3 10" stroke="#4a8f5b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-      ${stand()}${bust(60,20,120,false)}${hoe}${dirt}`);
+    /* Türk bahçe çapası: uzun ahşap sap, uca DİK yassı geniş ağız. Kaldır (omuz üstü) → savur → toprağa sapla → kendine çek */
+    const D='2.4s',PV=[150,116],KF=[[0,-72,0,0],[.36,-80,0,0],[.43,-34,0,0],[.47,18,0,0],[.52,64,0,0],[.6,64,0,0],[.78,58,-18,2],[.86,12,-8,0],[1,-72,0,0]];
+    const pt=(a,b)=>`${a.toFixed(1)} ${b.toFixed(1)}`;
+    const geo=([_,th,ox,oy])=>{const r=th*Math.PI/180,u=[Math.cos(r),Math.sin(r)],v=[-u[1],u[0]],P=[PV[0]+ox,PV[1]+oy],at=(s,w)=>[P[0]+u[0]*s+v[0]*w,P[1]+u[1]*s+v[1]*w];
+      const e0=at(-22,0),e1=at(130,0),b=[at(122,-3),at(136,-3),at(144,36),at(112,36)],h1=at(2,0),h2=at(30,0);
+      return{handle:`M${pt(...e0)} L${pt(...e1)}`,blade:`M${pt(...b[0])} L${pt(...b[1])} L${pt(...b[2])} Q${pt(...at(128,38))} ${pt(...b[3])}z`,ferrule:`M${pt(...at(118,0))} L${pt(...at(132,0))}`,
+        aL:`M84 96 Q${pt((84+h2[0])/2-6,(96+h2[1])/2+16)} ${pt(...h2)}`,aR:`M156 96 Q${pt((156+h1[0])/2+14,(96+h1[1])/2+10)} ${pt(...h1)}`,h1,h2};};
+    const G=KF.map(geo),kt=KF.map(k=>k[0]).join(';'),an=(key)=>A(`<animate attributeName="d" dur="${D}" repeatCount="indefinite" keyTimes="${kt}" values="${G.map(g=>g[key]).join(';')}"/>`);
+    const ft=(key)=>A(`<animateTransform attributeName="transform" type="translate" dur="${D}" repeatCount="indefinite" keyTimes="${kt}" values="${G.map(g=>pt(...g[key])).join(';')}"/>`);
+    const g0=G[0];
+    const hoe=`<path d="${g0.handle}" stroke="#7a4a22" stroke-width="7.5" stroke-linecap="round">${an('handle')}</path><path d="${g0.handle}" stroke="#c8925a" stroke-width="2.2" stroke-linecap="round" transform="translate(-1.2 -1.2)">${an('handle')}</path>
+      <path d="${g0.ferrule}" stroke="#4a5058" stroke-width="10" stroke-linecap="round">${an('ferrule')}</path>
+      <path d="${g0.blade}" fill="url(#${u}m)" stroke="#3e444b" stroke-width="1.6" stroke-linejoin="round">${an('blade')}</path>`;
+    const arms=`${limb(g0.aL,22,an('aL'))}<g transform="translate(${pt(...g0.h2)})">${ft('h2')}${fist(0,0,10,0)}</g>${limb(g0.aR,22,an('aR'))}<g transform="translate(${pt(...g0.h1)})">${ft('h1')}${fist(0,0,10,0)}</g>`;
+    const tip=geo(KF[4]),ti=[(+tip.blade.match(/L([\d.]+) ([\d.]+) L([\d.]+) ([\d.]+) Q/)[3]),236];
+    const dirt=[[-18,-30],[-8,-40],[6,-34],[16,-24],[-26,-16],[24,-14],[0,-46]].map(([dx,dy],k)=>`<circle cx="${(ti[0]-6).toFixed(1)}" cy="234" r="${2.6+(k%3)}" fill="${k%2?'#6b4423':'#9a6a3a'}" opacity="0">${A(`<animateTransform attributeName="transform" type="translate" dur="${D}" repeatCount="indefinite" keyTimes="0;.52;.74;1" values="0 0;0 0;${dx} ${dy+18};${dx} ${dy+18}"/><animate attributeName="opacity" dur="${D}" repeatCount="indefinite" keyTimes="0;.51;.54;.74;1" values="0;0;1;0;0"/>`)}</circle>`).join('');
+    const plant=(x,k)=>`<g transform="translate(${x} 228)"><path d="M0 0 V-16" stroke="#3f7d3a" stroke-width="2"/><path d="M0 -10 q-8 -2 -10 -8 q8 0 10 6M0 -14 q8 -3 10 -9 q-8 0 -10 7" fill="#58a14f"/>${k%2?'<circle cx="-5" cy="-6" r="3.6" fill="#e2412f"/><circle cx="4" cy="-4" r="3" fill="#e2412f"/>':'<path d="M3 -8 q6 4 3 12 q-4 -3 -3 -12z" fill="#2f8f3a"/>'}</g>`;
+    const ground=`<path d="M-10 236 H260 V260 H-10z" fill="#5a3a1e"/><path d="M-10 236 H260" stroke="#3e2713" stroke-width="2"/>
+      ${[200,226,252].map(x=>`<path d="M${x-14} 236 q14 -12 28 0z" fill="#7a5130"/>`).join('')}${[200,226,252].map((x,k)=>plant(x,k)).join('')}
+      <path d="M150 236 q10 -6 20 0z" fill="#7a5130"/>`;
+    return wrap('0 -50 260 310',`${ground}${stand()}${bust(60,20,120,false)}${hoe}${arms}${dirt}`);
   }
   return gorSvg(cls||'');
 }
