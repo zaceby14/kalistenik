@@ -805,14 +805,26 @@ function mix(a,b,t){const same=(A,B)=>A.length===B.length&&A.every((q,i)=>d2(q,B
   else if(ff){const G=a.feet[0];P=vadd(G,pol(vsub(a.P,G),vsub(b.P,G),t));S=vadd(P,pol(vsub(a.S,a.P),vsub(b.S,b.P),t));}
   else{P=lp(a.P,b.P,t);S=vadd(P,pol(vsub(a.S,a.P),vsub(b.S,b.P),t));}
   const limb=(A,B,fix,R0,R1,Rt)=>A.map((f,i)=>{const g=B[i]||f;const w=(fix||(f[1]<.09&&g[1]<.09))?lp(f,g,t):vadd(Rt,pol(vsub(f,R0),vsub(g,R1),t));return[w[0],w[1],...(t<.5?f:g).slice(2)];});
-  return{facing:a.facing,front:a.front,S,P,h:lerp(a.h,b.h,t),hd:lerp(a.hd??.17,b.hd??.17,t),sh:lerp(a.sh||0,b.sh||0,t),rb:lerp(a.rb||0,b.rb||0,t),lb:lerp(a.lb||0,b.lb||0,t),sc:a.sc||b.sc,sup:a.sup||b.sup,
+  return{facing:a.facing,front:a.front,S,P,h:lerp(a.h,b.h,t),hd:lerp(a.hd??.17,b.hd??.17,t),sh:lerp(a.sh||0,b.sh||0,t),rb:lerp(a.rb||0,b.rb||0,t),lb:lerp(a.lb||0,b.lb||0,t),sc:a.sc||b.sc,sup:a.sup||b.sup,sn:t<.5?(a.sn||b.sn):(b.sn||a.sn),gz:(a.gz!=null&&b.gz!=null)?lerp(a.gz,b.gz,t):undefined,
     feet:limb(a.feet,b.feet,ff,a.P,b.P,P),hands:limb(a.hands,b.hands,hf,a.S,b.S,S)};}
 /* front:1 = önden görünüş: kollar omuz genişliğinden, bacaklar kalça genişliğinden çıkar (0. uzuv solda) */
 function joints(p){const J={S:p.S,P:p.P,legs:[],arms:[]},fr=p.front?1:0,r=(o,i,w)=>fr?[o[0]+(i?w:-w),o[1]]:o;
   p.feet.forEach((f,i)=>{const o=r(p.P,i,.09),[k,e]=ik(o,f,LL1,LL2,f[2]);J.legs.push([k,e,!!f[3],f[4],o]);});
-  p.hands.forEach((h,i)=>{const o=r(p.S,i,.15),[k,e]=ik(o,h,AL1,AL2,h[2]);J.arms.push([k,e,!!h[3],o]);});
+  p.hands.forEach((h,i)=>{const o=r(p.S,i,.15),[k,e]=ik(o,h,AL1,AL2,h[2]);J.arms.push([k,e,!!h[3],o,h[4]]);});
   const sh=p.sh||0,ux=p.S[0]-p.P[0],uy=p.S[1]-p.P[1],ul=Math.hypot(ux,uy)||1;J.T=[p.S[0]-sh*ux/ul,p.S[1]-sh*uy/ul];
-  const a=p.h*Math.PI/180,hd=p.hd??.17;J.head=[J.T[0]+hd*Math.cos(a),J.T[1]+hd*Math.sin(a)];return J;}
+  const a=p.h*Math.PI/180,hd=p.hd??.17;J.head=[J.T[0]+hd*Math.cos(a),J.T[1]+hd*Math.sin(a)];
+  /* yüz yönü: boyna dik, göğüs tarafına (p.gz ile elle derece verilebilir) */
+  if(!p.front){const dx=J.T[0]-p.P[0],dy=J.T[1]-p.P[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,fa=p.facing??1,
+    sg=p.sn||1,cx=-nx*sg,cy=-ny*sg,hx=J.head[0]-J.T[0],hy=J.head[1]-J.T[1],hl=Math.hypot(hx,hy)||1,ux=hx/hl,uy=hy/hl,dt=cx*ux+cy*uy;
+    let fx=cx-dt*ux,fy=cy-dt*uy,fl=Math.hypot(fx,fy);if(fl<.2){fx=cx;fy=cy;fl=1;}J.fd=p.gz!=null?[Math.cos(p.gz*RD0),Math.sin(p.gz*RD0)]:[fx/fl,fy/fl];J.nk=[ux,uy];J.bk=[-cx,-cy];}
+  return J;}
+const RD0=Math.PI/180;
+/* baş: daire + burun (bakış yönü) + göz; önden görünüşte iki göz */
+function headSvg(J,col){const h=J.head,c=col||'var(--ink)',F_=n=>n.toFixed(3);let s=`<circle cx="${F_(h[0])}" cy="${F_(-h[1])}" r=".1" fill="${c}" stroke="var(--stage)" stroke-width=".025"/>`;
+  if(J.fd){const f=J.fd,n=J.nk,q=(a,b)=>[h[0]+f[0]*a+n[0]*b,h[1]+f[1]*a+n[1]*b],b1=q(.08,.025),b2=q(.085,-.025),tp=q(.128,-.012),e=q(.045,.03);
+    s+=`<path d="M${F_(b1[0])} ${F_(-b1[1])} L${F_(tp[0])} ${F_(-tp[1])} L${F_(b2[0])} ${F_(-b2[1])} Z" fill="${c}" stroke="${c}" stroke-width=".012" stroke-linejoin="round"/><circle cx="${F_(e[0])}" cy="${F_(-e[1])}" r=".021" fill="var(--stage)"/>`;}
+  else s+=`<circle cx="${F_(h[0]-.035)}" cy="${F_(-h[1]-.01)}" r=".018" fill="var(--stage)"/><circle cx="${F_(h[0]+.035)}" cy="${F_(-h[1]-.01)}" r=".018" fill="var(--stage)"/>`;
+  return s;}
 const ease=t=>.5-.5*Math.cos(Math.PI*t);
 function timeline(d){const k=d.k,n=k.length,seg=[];
   for(let i=0;i<n;i++){seg.push({a:i,b:i,d:k[i].hold??.8}); if(i<n-1) seg.push({a:i,b:i+1,d:k[i].go??1.2});}
@@ -852,11 +864,15 @@ function svgFor(d,time){
     if(f[1]<.09) return [f[0]+fa*.09,f[1]];
     return [f[0]+dx/L*.07,f[1]+dy/L*.07];};
   const limb=(far,part=3)=>{let o='';const col=far?'var(--far)':'var(--ink)';
-    const dot=(q,r)=>`<circle cx="${F(q[0])}" cy="${F(Y(q[1]))}" r="${r}" fill="${OL}" fill-opacity=".55"/>`;
-    if(part&1) J.legs.forEach(([k,f,fr,st,o0])=>{if(fr===far){const t=foot(k,f,st);o+=seg2(o0,k,col,.12)+seg2(k,f,col,.09)+ln(f,t,col,.06)+dot(k,.022)+dot(f,.018);}});
-    if(part&2) J.arms.forEach(([e,h,fr,o0])=>{if(fr===far) o+=seg2(o0,e,col,.085)+seg2(e,h,col,.07)+dot(e,.018)+dot(h,.015);});return o;};
+    const dot=(q,r)=>`<circle cx="${F(q[0])}" cy="${F(Y(q[1]))}" r="${r}" fill="${OL}"/>`;
+    const surf=h=>{if(h[1]<.06)return 1;return (d.props||[]).some(q=>(q[0]==='box'&&h[0]>q[1]-.03&&h[0]<q[2]+.03&&Math.abs(h[1]-q[3])<.05)||(q[0]==='blk'&&h[0]>q[1]-.03&&h[0]<q[2]+.03&&Math.abs(h[1]-q[4])<.05)||(q[0]==='chair'&&h[0]>q[1]-.03&&h[0]<q[2]+.03&&Math.abs(h[1]-q[3])<.05))?1:0;};
+    const hand=(e,h,st,col)=>{if(st==='n'||(d.d7&&d.d7.fing))return dot(h,.02);
+      if(surf(h)){let dir=typeof st==='number'?st:0;if(!dir&&J.bk){const c=[-J.bk[0],-J.bk[1]],dn=[J.P[0]-J.T[0],J.P[1]-J.T[1]],o0=J.arms.find(a=>a[1]===h),ua=o0?[o0[0][0]-o0[3][0],o0[0][1]-o0[3][1]]:dn,th=Math.atan2(dn[0]*ua[1]-dn[1]*ua[0],dn[0]*ua[0]+dn[1]*ua[1]),ax=c[0]*Math.cos(th)-c[1]*Math.sin(th);dir=Math.abs(ax)>.25?Math.sign(ax):(p.facing??1);}if(!dir)dir=p.facing??1;return ln(h,[h[0]+dir*.1,h[1]],col,.055)+dot(h,.02);}
+      return `<circle cx="${F(h[0])}" cy="${F(Y(h[1]))}" r=".037" fill="${col}" stroke="${OL}" stroke-width=".015"/>`;};
+    if(part&1) J.legs.forEach(([k,f,fr,st,o0])=>{if(fr===far){const t=foot(k,f,st);o+=seg2(o0,k,col,.12)+seg2(k,f,col,.09)+ln(f,t,col,.06)+dot(k,.03)+dot(f,.022)+(far?'':dot(o0,.028));}});
+    if(part&2) J.arms.forEach(([e,h,fr,o0,hs])=>{if(fr===far) o+=seg2(o0,e,col,.085)+seg2(e,h,col,.07)+hand(e,h,hs,col)+dot(e,.026)+(far?'':dot(o0,.026));});return o;};
   const torso=()=>{const T=J.T,dx=T[0]-J.P[0],dy=T[1]-J.P[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,ws=p.front?.17:.1,wp=p.front?.13:.075;
-    const fa=p.facing??1,sg=(Math.abs(ny)>.3?(ny>0?1:-1):(nx*fa<0?1:-1))*(p.sup?-1:1),bx=nx*sg,by=ny*sg,rb=p.front?0:(p.rb||0),lb=p.front?0:(p.lb||0);
+    const fa=p.facing??1,sg=(Math.abs(ny)>.3?(ny>0?1:-1):(nx*fa<0?1:-1))*(p.sup?-1:1),bx=J.bk?J.bk[0]:nx*sg,by=J.bk?J.bk[1]:ny*sg,rb=p.front?0:(p.rb||0),lb=p.front?0:(p.lb||0);
     const at=(f,u)=>[T[0]-dx*f+bx*u,T[1]-dy*f+by*u];
     if(p.front){const side=k=>[[0,ws*.92],[.14,ws*1.1],[.4,ws],[.62,wp*.82],[.86,wp*1.08],[1,wp*.95]].map(([f,w])=>at(f,k*w));const pts=[...side(1),...side(-1).reverse()];
       return `<polygon points="${pts.map(q=>F(q[0])+','+F(Y(q[1]))).join(' ')}" fill="var(--ink)" stroke="var(--ink)" stroke-width=".04" stroke-linejoin="round"/>`;}
@@ -870,10 +886,12 @@ function svgFor(d,time){
     let o=blob(J.P,M,wp*1.0,wp*1.02,wp*.84,lb*.5)+blob(M,T,wp*.84,ws*1.12,ws*.92,rb);
     const jd=(q,r)=>`<circle cx="${F(q[0])}" cy="${F(Y(q[1]))}" r="${r}" fill="${OL}" fill-opacity=".5"/>`;
     o+=jd(M,.022)+jd(J.T,.024)+jd(J.P,.026);
-    if(p.sc&&!p.front){const bl=at(.1,ws+rb+.04),b2=at(.42,ws+rb*.8+.03);o+=ln(bl,b2,'var(--accent)',.05);}
+    if(p.sc&&!p.front){const sh=p.sh||0,f0=.04-sh*2.2,f1=.4-sh*2.2,u=ws*.9+rb*.6-Math.max(0,rb)*1.6+Math.max(0,-rb)*.8;
+      const A=at(f0,u+.025),B=at(f1,u-.01),C=at((f0+f1)*.45,u+.055);
+      o+=`<path d="M${F(A[0])} ${F(Y(A[1]))} L${F(C[0])} ${F(Y(C[1]))} L${F(B[0])} ${F(Y(B[1]))} Z" fill="var(--accent)" stroke="var(--accent)" stroke-width=".03" stroke-linejoin="round" opacity=".95"/>`;}
     return o;};
   s+=limb(true);
-  s+=ln(J.T,J.head,'var(--ink)',.07)+torso()+`<circle cx="${F(J.head[0])}" cy="${F(Y(J.head[1]))}" r=".1" fill="var(--ink)" stroke="${OL}" stroke-width=".025"/>`;
+  s+=ln(J.T,J.head,'var(--ink)',.075)+torso()+headSvg(J);
   s+=limb(false,1)+front()+limb(false,2);
   (d.props||[]).forEach(pr=>{if(pr[0]==='band'){const t=pr[3]==='P'?J.P:J.legs[0][0];s+=ln([pr[1],pr[2]],t,'var(--accent)',.03,'stroke-dasharray=".07 .05"');}});
   return {svg:s+'</svg>',cap};
@@ -1296,7 +1314,7 @@ DRAW['HS_ENTRY:9']={alt:'Pike jump to handstand',props:[FL],k:[
     d10post:(q)=>`<circle cx="${F3(q[1])}" cy="${F3(Y(q[2]))}" r=".04" fill="${PR}"/>`,
     d10band:(q,J)=>{const t=q[3]==='P'?J.P:q[3]==='H1'?J.arms[1][1]:J.arms[0][1];
       return ln([q[1],q[2]],t,'var(--accent)',.03,'stroke-dasharray=".07 .05"');},
-    d10head:(q,J)=>`<circle cx="${F3(J.head[0])}" cy="${F3(Y(J.head[1]))}" r=".1" fill="var(--ink)" stroke="var(--stage)" stroke-width=".025"/>`,
+    d10head:(q,J)=>headSvg(J),
   };
   const fx=function(d,time){const r=base(d,time),pr=(d.props||[]).filter(p=>BACK[p[0]]||FRONT[p[0]]);if(!pr.length) return r;
     const {p}=poseAt(d,time),J=joints(p),b=bounds(d);let bk='',fr='';
@@ -1527,7 +1545,7 @@ const G={
   mat:(x1,x2,y0,y1)=>RC(x1,x2,y0,y1,'rx=".03" fill="var(--boxc)" stroke="var(--prop)" stroke-width=".02"'),
   band:(a,c,w=.032)=>LN(a,c,'var(--accent)',w),
   fist:(q,far)=>`<circle cx="${X(q[0])}" cy="${Yv(q[1])}" r=".048" fill="${far?'var(--far)':'var(--ink)'}" stroke="var(--stage)" stroke-width=".02"/>`,
-  head:J=>`<circle cx="${X(J.head[0])}" cy="${Yv(J.head[1])}" r=".1" fill="var(--ink)" stroke="var(--stage)" stroke-width=".025"/>`,
+  head:J=>headSvg(J),
 };
 /* izdüşüm kolu: omuz o, dirsek e, el h */
 const ARM=(o,e,h,far)=>{const c=far?'var(--far)':'var(--ink)';return SEG(o,e,c,.085)+SEG(e,h,c,.07);};
@@ -2035,7 +2053,7 @@ const d13G={
       +d13RC(x1,x2,h-.045,h,'rx=".015" fill="var(--boxc)" stroke="var(--prop)" stroke-width=".02"'),
   band:(a,c,w=.03)=>d13LN(a,c,'var(--accent)',w),
   fist:(q,far,open)=>`<circle cx="${d13X(q[0])}" cy="${d13Y(q[1])}" r=".048" fill="${open?'var(--stage)':far?'var(--far)':'var(--ink)'}" stroke="${open?'var(--ink)':'var(--stage)'}" stroke-width="${open?'.025':'.02'}"/>`,
-  head:J=>`<circle cx="${d13X(J.head[0])}" cy="${d13Y(J.head[1])}" r=".1" fill="var(--ink)" stroke="var(--stage)" stroke-width=".025"/>`,
+  head:J=>headSvg(J),
 };
 const d13ARM=(o,e,h,far)=>{const c=far?'var(--far)':'var(--ink)';return d13SEG(o,e,c,.085)+d13SEG(e,h,c,.07);};
 const d13prev=svgFor;
@@ -3061,7 +3079,7 @@ D['PL_PUSH:4']=pppu(HPp,58,.40,FY,['Eller parallette, omuz önde','Derin in: gö
   const FRONT={
     bar:(q)=>`<circle cx="${F3(q[1])}" cy="${F3(Y(q[2]))}" r=".045" fill="var(--prop)" stroke="var(--stage)" stroke-width=".015"/>`,
     barF:(q)=>ln([q[1]-q[3]-.05,q[2]],[q[1]+q[3]+.05,q[2]],'var(--prop)',.05),
-    headtop:(q,J)=>`<circle cx="${F3(J.head[0])}" cy="${F3(Y(J.head[1]))}" r=".1" fill="var(--ink)" stroke="var(--stage)" stroke-width=".025"/>`,
+    headtop:(q,J)=>headSvg(J),
     roll:(q)=>`<circle cx="${F3(q[1])}" cy="${F3(Y(q[2]))}" r="${F3(q[3])}" fill="var(--boxc)" stroke="var(--prop)" stroke-width=".025"/>`,
     xband:(q,J)=>{const u=vsub(J.S,J.P),L=Math.hypot(u[0],u[1])||1,t=q[3]==='C'?[J.S[0]-u[0]/L*.12,J.S[1]-u[1]/L*.12]:q[3]==='P'?J.P:J.legs[0][0];
       return ln([q[1],q[2]],t,'var(--accent)',q[4]||.03,'stroke-dasharray=".07 .05" opacity=".8"');},
@@ -3669,7 +3687,7 @@ DRAW['LS_STRADDLE:9']={view:'önden',alt:'Önden: parallette straddle L-sit',pro
   const BACK={d9bar:(q,J,b)=>ln([q[1],q[2]],[q[1],-b.y],'var(--prop)',.03)};
   const FRONT={
     d9bar:(q)=>`<circle cx="${F9(q[1])}" cy="${F9(Y9(q[2]))}" r=".045" fill="var(--prop)" stroke="var(--stage)" stroke-width=".015"/>`,
-    d9head:(q,J)=>`<circle cx="${F9(J.head[0])}" cy="${F9(Y9(J.head[1]))}" r=".1" fill="var(--ink)" stroke="var(--stage)" stroke-width=".025"/>`,
+    d9head:(q,J)=>headSvg(J),
     d9arr:(q)=>{const a=[q[1],q[2]],c=[q[3],q[4]];return ln(a,c,'var(--accent)',.025)+hd(a,c);},
     d9arc:(q)=>{const [,cx,cy,r,a0,a1]=q,pts=[];for(let i=0;i<=16;i++){const a=(a0+(a1-a0)*i/16)*Math.PI/180;pts.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}
       return `<polyline points="${pts.map(z=>F9(z[0])+','+F9(Y9(z[1]))).join(' ')}" fill="none" stroke="var(--accent)" stroke-width=".025" stroke-linecap="round"/>`+hd(pts[14],pts[16])+(q[6]===2?hd(pts[2],pts[0]):'');},
@@ -3897,11 +3915,17 @@ Object.values(DRAW).forEach(d=>{if(!d||!d.k)return;let hit=false;d.k.forEach(p=>
   if(hit){d.k.forEach(p=>{p.sc=1;p.rb=p.rb||0;});d._b=null;}});
 /* harekete özel eklem ayarları: ART['KOD']={kare:{rb,lb,sh,sc}} — rb üst sırt (+ kabarık/kürek açık, − kürek sıkışık/göğüs açık), lb bel (+ yuvarlak/leğen arkaya devrik, − bel çukuru/arch), sh omuz (+ kulağa, − aşağı), sc kürek işareti */
 const ART={"HS_LINE:1":{"0":{"sh":-0.05,"sc":1},"1":{"sh":0.06}},"HS_LINE:7":{"0":{"sh":-0.05},"1":{"sh":0.06}},"HS_LINE:9":{"0":{"sh":-0.05},"1":{"sh":0.06}},"HS_PARA:1":{"0":{"sh":-0.03,"sc":1},"1":{"sh":0.06},"2":{"sh":0.06}},"HS_LINE:2":{"1":{"sh":0.05},"2":{"sh":0.05}},"PPU_HSPU:3":{"0":{"sh":0.05},"1":{"sh":0.05}},"HS_LINE:6":{"1":{"lb":0.02,"sh":0.05}},"HS_BAL:5":{"1":{"lb":0.02,"sh":0.05}},"HS_BAL:9":{"1":{"lb":0.02,"sh":0.05}},"HS_PARA:4":{"1":{"lb":0.02,"sh":0.05}},"HS_PARA:8":{"1":{"lb":0.02,"sh":0.05},"2":{"lb":0.02,"sh":0.05}},"PPU_HSPU:10":{"0":{"lb":0.02,"sh":0.05}},"ST:scapular push ups":{"0":{"rb":-0.05,"sc":1},"1":{"rb":0.08}},"PL_LEAN:5":{"0":{"rb":-0.05,"sc":1},"1":{"rb":0.08}},"PL_LEAN:1":{"0":{"rb":0.03,"sc":1},"1":{"rb":0.07,"sh":-0.03},"2":{"rb":0.07,"sh":-0.03}},"PL_LEAN:2":{"0":{"rb":0.03,"sc":1},"1":{"rb":0.07,"sh":-0.03}},"PL_LEAN:3":{"0":{"rb":0.03,"sc":1},"1":{"rb":0.07,"sh":-0.03}},"PL_LEAN:4":{"0":{"rb":0.03,"sc":1},"1":{"rb":0.07,"sh":-0.03}},"PL_LEAN:7":{"0":{"rb":0.03,"sc":1},"1":{"rb":0.07,"sh":-0.03}},"PL_LEAN:9":{"1":{"rb":0.06,"lb":0.02,"sc":1}},"PL_LEAN:10":{"1":{"rb":0.06,"lb":0.02,"sc":1}},"PL_TUCK:2":{"1":{"rb":0.08,"lb":0.04,"sc":1}},"PL_TUCK:8":{"0":{"rb":0.07,"sc":1},"1":{"rb":0.08,"lb":0.04}},"PL_TUCK:3":{"2":{"rb":0.07,"lb":0.03,"sc":1}},"PL_TUCK:4":{"2":{"rb":0.07,"lb":0.03,"sc":1}},"PL_TUCK:5":{"0":{"rb":0.07,"lb":0.03,"sc":1},"1":{"rb":0.07,"lb":0.03,"sc":1}},"PL_TUCK:6":{"1":{"rb":0.07,"lb":0.03,"sc":1}},"PL_TUCK:7":{"1":{"rb":0.07,"lb":0.03,"sc":1}},"PL_TUCK:9":{"2":{"rb":0.07,"lb":0.03,"sc":1}},"PL_TUCK:10":{"0":{"rb":0.06,"lb":0,"sc":1},"1":{"rb":0.06,"lb":0,"sc":1}},"PL_PUSH:1":{"0":{"rb":0.06,"sh":-0.02,"sc":1},"1":{"rb":0.02},"2":{"rb":0.02}},"PL_PUSH:2":{"0":{"rb":0.06,"sh":-0.02,"sc":1},"1":{"rb":0.02},"2":{"rb":0.02}},"PL_PUSH:3":{"0":{"rb":0.06,"sh":-0.02,"sc":1},"1":{"rb":0.02},"2":{"rb":0.02}},"PL_PUSH:4":{"0":{"rb":0.06,"sh":-0.02,"sc":1},"1":{"rb":0.02},"2":{"rb":0.02}},"PL_PUSH:5":{"0":{"rb":0.06,"sh":-0.02,"sc":1},"1":{"rb":0.02},"2":{"rb":0.02}},"PL_PUSH:6":{"0":{"rb":0.06,"lb":0.03,"sc":1},"1":{"rb":0.06,"lb":0.03,"sc":1}},"PL_PUSH:7":{"0":{"rb":0.06,"lb":0.03,"sc":1},"1":{"rb":0.06,"lb":0.03,"sc":1},"2":{"rb":0.06,"lb":0.03,"sc":1}},"PL_PUSH:8":{"0":{"rb":0.08,"lb":0.03,"sc":1},"1":{"rb":0.04,"lb":0.03}},"PL_BENT:3":{"1":{"rb":0.06,"lb":0.03,"sc":1}},"PL_BENT:6":{"1":{"rb":0.05,"lb":0.03,"sc":1}},"PR_LEAN:1":{"1":{"rb":0.05,"sc":1}},"PR_STRAD:2":{"1":{"rb":0.05,"sc":1}},"PR_LEAN:7":{"1":{"rb":0.05,"lb":0.04,"sc":1}},"PR_LEAN:9":{"1":{"rb":0.05,"lb":0.04,"sc":1}},"PR_WALL:8":{"1":{"rb":0.05,"lb":0.04}},"PR_WALL:13":{"1":{"rb":0.05,"lb":0.04}},"PR_WALL:7":{"1":{"rb":0.05,"lb":0.05}},"PR_COMP:3":{"3":{"rb":0.04,"lb":0.04},"4":{"rb":0.04,"lb":0.04},"5":{"rb":0.04,"lb":0.04},"6":{"rb":0.04,"lb":0.04}},"PR_COMP:5":{"3":{"rb":0.04,"lb":0.04},"4":{"rb":0.04,"lb":0.04},"5":{"rb":0.04,"lb":0.04},"6":{"rb":0.04,"lb":0.04}},"PR_COMP:6":{"3":{"rb":0.04,"lb":0.04},"4":{"rb":0.04,"lb":0.04},"5":{"rb":0.04,"lb":0.04},"6":{"rb":0.04,"lb":0.04}},"PR_COMP:7":{"3":{"rb":0.04,"lb":0.04},"4":{"rb":0.04,"lb":0.04},"5":{"rb":0.04,"lb":0.04},"6":{"rb":0.04,"lb":0.04}},"PR_COMP:8":{"0":{"rb":0.05,"lb":0.05},"1":{"rb":0.05,"lb":0.05}},"PU_LAT:5":{"1":{"sh":-0.05}},"PU_LAT:6":{"1":{"sh":-0.05}},"PU_LAT:7":{"1":{"sh":-0.05},"2":{"sh":-0.05}},"PU_LAT:8":{"1":{"sh":-0.05}},"PU_LAT:9":{"1":{"sh":-0.05}},"PU_LAT:1":{"1":{"sh":-0.04,"sc":1}},"PU_LAT:2":{"1":{"rb":-0.03,"sh":-0.05,"sc":1}},"PU_SHLD:5":{"1":{"rb":-0.04,"sc":1}},"ST:active hang scapular depression":{"0":{"sh":0.06},"1":{"sh":-0.06}},"ST:scapular pull ups":{"0":{"sh":0.06},"1":{"sh":-0.06}},"PU_SHLD:8":{"0":{"sh":0.06},"1":{"sh":-0.06}},"PU_GRIP:1":{"1":{"sh":-0.05}},"PU_GRIP:2":{"1":{"sh":-0.05}},"PU_GRIP:7":{"1":{"sh":-0.05}},"PU_VERT:2":{"0":{"sh":0.04,"sc":1},"1":{"sh":-0.05},"2":{"rb":-0.04,"sh":-0.04}},"PU_VERT:3":{"0":{"sh":0.04,"sc":1},"1":{"sh":-0.05},"2":{"rb":-0.04,"sh":-0.04}},"PU_VERT:5":{"0":{"sh":0.04,"sc":1},"1":{"sh":-0.05},"2":{"rb":-0.04,"sh":-0.04}},"PU_VERT:6":{"0":{"sh":0.04,"sc":1},"1":{"sh":-0.05},"2":{"rb":-0.04,"sh":-0.04}},"PU_VERT:10":{"0":{"sh":0.04,"sc":1},"1":{"sh":-0.05},"2":{"rb":-0.05,"sh":-0.05}},"PU_VERT:7":{"0":{"sh":-0.04,"sc":1}},"PU_VERT:8":{"0":{"sh":-0.04,"sc":1}},"PU_VERT:4":{"0":{"rb":-0.04,"sh":-0.04,"sc":1},"2":{"sh":-0.04}},"PU_CHIN:4":{"2":{"sh":-0.04,"sc":1}},"PU_CHIN:7":{"2":{"sh":-0.04,"sc":1}},"PU_ISO:3":{"0":{"sh":-0.04,"sc":1},"1":{"rb":-0.04,"sh":-0.04}},"PU_ISO:4":{"0":{"sh":-0.04,"sc":1}},"PU_ISO:5":{"1":{"sh":-0.05,"sc":1}},"PU_ISO:8":{"0":{"sh":-0.04,"sc":1},"1":{"rb":-0.04,"sh":-0.05}},"LS_HANG:1":{"0":{"sh":-0.05,"sc":1}},"LS_HANG:3":{"0":{"sh":-0.05,"sc":1}},"LS_HANG:6":{"0":{"sh":-0.05,"sc":1},"1":{"lb":0.03,"sh":-0.05}},"LS_HANG:2":{"2":{"rb":0.02,"lb":0.05}},"DIP:1":{"1":{"lb":0.02,"sh":-0.05,"sc":1}},"DIP:2":{"0":{"sh":-0.06,"sc":1},"1":{"sh":0.06}},"DIP:6":{"1":{"sh":-0.03,"sc":1}},"DIP:7":{"1":{"sh":-0.03,"sc":1}},"LS_HOLD:5":{"1":{"rb":0.04,"lb":0.03,"sh":-0.05,"sc":1}},"LS_HOLD:6":{"0":{"rb":0.04,"lb":0.03,"sh":-0.05,"sc":1},"1":{"rb":0.04,"lb":0.03,"sh":-0.05,"sc":1}},"LS_HOLD:8":{"1":{"rb":0.04,"lb":0.03,"sh":-0.05,"sc":1}},"LS_TUCK:4":{"0":{"rb":0.04,"lb":0.03,"sh":-0.05,"sc":1},"1":{"rb":0.04,"lb":0.03,"sh":-0.05,"sc":1}},"LS_TUCK:6":{"1":{"rb":0.04,"lb":0.03,"sh":-0.05,"sc":1}},"LS_TUCK:10":{"1":{"rb":0.04,"lb":0.03,"sh":-0.05,"sc":1}},"LS_HOLD:1":{"2":{"sh":-0.05,"sc":1}},"LS_HOLD:10":{"1":{"rb":-0.02,"sh":-0.05,"sc":1}},"LS_HOLD:11":{"1":{"rb":-0.02,"sh":-0.05,"sc":1}},"LS_CROSS:3":{"1":{"sh":-0.05,"sc":1}},"LS_CROSS:4":{"1":{"sh":-0.05,"sc":1}},"LS_CROSS:1":{"1":{"sh":-0.05}},"LS_COMP:6":{"1":{"rb":0.03,"lb":0.04}},"CORE_HOLLOW:10":{"1":{"rb":0.03,"lb":0.03}},"CORE_PELVIS:2":{"0":{"lb":-0.03},"1":{"lb":0.05}},"CORE_ARCH:3":{"1":{"rb":-0.04,"lb":-0.05}},"CORE_ARCH:4":{"1":{"rb":-0.04,"lb":-0.05}},"CORE_ARCH:7":{"0":{"rb":-0.04,"lb":-0.05},"1":{"rb":-0.04,"lb":-0.05}},"CORE_ARCH:2":{"1":{"rb":-0.02,"lb":-0.02}},"ST:sphinx stretch":{"1":{"rb":-0.03,"lb":-0.05}},"ST:pelvic tilt cat cow":{"0":{"rb":0.06,"lb":0.05},"1":{"rb":-0.05,"lb":-0.05}},"ST:jefferson curl bodyweight":{"1":{"rb":0.08,"lb":0.03},"2":{"rb":0.08,"lb":0.05}},"ST:half kneeling hip flexor stretch":{"1":{"lb":0.04}},"ST:half-kneeling hip flexor stretch":{"1":{"lb":0.04}},"ST:couch stretch hip flexor":{"1":{"lb":0.04}},"ST:shoulder flexion wall stretch":{"1":{"lb":0.03}},"ST:seated pike stretch":{"0":{"rb":-0.02},"1":{"rb":-0.02,"lb":-0.03}},"ST:pike stretch":{"1":{"rb":-0.02,"lb":-0.03}},"LG_HINGE:4":{"1":{"rb":-0.02,"lb":-0.02}},"LG_HINGE:5":{"1":{"rb":-0.02,"lb":-0.02}},"LG_HINGE:6":{"1":{"rb":-0.02,"lb":-0.02},"2":{"rb":-0.02,"lb":-0.02}},"LG_HINGE:7":{"1":{"rb":-0.02,"lb":-0.02}},"LG_HINGE:8":{"0":{"rb":-0.02,"lb":-0.02},"1":{"rb":-0.02,"lb":-0.02}},"LG_HINGE:9":{"0":{"rb":-0.02,"lb":-0.02}},"CORE_HOLLOW:5":{"1":{"rb":0.04,"lb":0.05,"sup":1}},"CORE_HOLLOW:7":{"1":{"rb":0.04,"lb":0.05,"sup":1}},"CORE_HOLLOW:6":{"0":{"rb":0.04,"lb":0.05,"sup":1},"1":{"rb":0.04,"lb":0.05,"sup":1}},"CORE_HOLLOW:8":{"0":{"rb":0.04,"lb":0.05,"sup":1},"1":{"rb":0.04,"lb":0.05,"sup":1},"2":{"rb":0.04,"lb":0.05,"sup":1}},"CORE_HOLLOW:9":{"0":{"rb":0.04,"lb":0.05,"sup":1},"1":{"rb":0.04,"lb":0.05,"sup":1}},"CORE_PELVIS:6":{"0":{"rb":0.04,"lb":0.05,"sup":1}},"CORE_PELVIS:8":{"0":{"rb":0.04,"lb":0.05,"sup":1}},"CORE_PELVIS:9":{"0":{"rb":0.04,"lb":0.05,"sup":1}},"CORE_HOLLOW:1":{"0":{"lb":0.04,"sup":1},"1":{"lb":0.04,"sup":1}},"CORE_HOLLOW:2":{"0":{"lb":0.04,"sup":1},"1":{"lb":0.04,"sup":1}},"CORE_HOLLOW:3":{"0":{"lb":0.04,"sup":1},"1":{"lb":0.04,"sup":1}},"CORE_HOLLOW:4":{"0":{"lb":0.04,"sup":1},"1":{"lb":0.04,"sup":1}},"CORE_PELVIS:4":{"0":{"lb":0.04,"sup":1},"1":{"lb":0.04,"sup":1}},"CORE_PELVIS:5":{"0":{"lb":0.04,"sup":1},"1":{"lb":0.04,"sup":1},"2":{"lb":0.04,"sup":1}},"LS_ACTIVE:1":{"0":{"lb":0.04,"sup":1},"1":{"lb":0.04,"sup":1},"2":{"lb":0.04,"sup":1}},"CORE_PELVIS:1":{"0":{"lb":-0.02,"sup":1},"1":{"lb":0.05,"sup":1}},"CORE_PELVIS:3":{"1":{"lb":0.05,"sup":1}},"LG_HINGE:1":{"1":{"lb":0.03,"sup":1}},"LG_HINGE:2":{"1":{"lb":0.03,"sup":1}}};
+/* anatomi koçu: yandan görünüşte göğüs yönü artık tek kuralla belirlenir (sn=1: ayakta +x'e bakan bedenin döndürülmüş hali; amut, plank, sırtüstü hepsi tutarlı).
+   sn=-1 yalnızca bedenin aynalanmış (−x'e dönük) çizildiği karelerde verilir. */
+const SNS={};
+/* bakış yönü (derece, dünya ekseni): tarifte bakış noktası verilen hareketler */
+const GZ={'HS_LINE:2':-60};
+function applySns(){Object.entries(SNS).forEach(([k,v])=>{const d=DRAW[k];if(d&&d.k)d.k.forEach(p=>{if(!p.front)p.sn=v;});});Object.entries(GZ).forEach(([k,v])=>{const d=DRAW[k];if(d&&d.k)d.k.forEach(p=>{if(!p.front)p.gz=v;});});}
 function applyArt(){Object.entries(ART).forEach(([k,m])=>{const d=DRAW[k];if(!d||!d.k)return;Object.entries(m).forEach(([i,v])=>{const p=d.k[+i];if(p)Object.assign(p,v);});if(Object.values(m).some(v=>v.sc))d.k.forEach(p=>{p.sc=1;});d._b=null;});}
 Object.values(DRAW).forEach(d=>{if(!d||!d.k)return;d.k.forEach(p=>{if(p.sc||p.front)return;const c=p.cap||'';
   if(/hollow|kambur|sırtı yuvarla|çanak|bel yere bas|kürekler yerden/i.test(c))p.rb=.035;
   else if(/arch|kavis|göğüs öne|superman|kobra|cobra/i.test(c))p.rb=-.03;});});
-applyArt();
+applyArt();applySns();
 
 /* kayıt */
 const PROFS={zeynel:{ad:'Zeynel',cls:'',h:'3d8295dca3c20ede915b542f6002d7b063319e889e0e1bd10066ad6469ba0eb3'},bayram:{ad:'Bayram',cls:'s',h:'c78ff0eb8c8dd03b0baf595219c496635ec51480a756b7ddd81481113fca1d8d'},misafir:{ad:'Misafir',cls:'xs'}};
