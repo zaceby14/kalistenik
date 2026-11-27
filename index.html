@@ -34,7 +34,14 @@ a{color:inherit}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 8px}
 .brand{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.02em;text-transform:uppercase;margin:0 0 8px}
 .brand span{color:var(--accent)}
-.hello{margin:-4px 0 8px;font-size:15px;font-weight:600;color:var(--muted)}
+.hello{margin:-4px 0 8px;font-size:15px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px}
+.hello .g{font-size:22px;line-height:1}.hello .g.s{font-size:14px}
+.prof{position:fixed;inset:0;z-index:9999;background:var(--bg,#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:16px}
+.prof h1{font-family:var(--display);text-transform:uppercase;font-size:26px;margin:0}
+.prof .pp{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:420px}
+.prof button{border:2px solid var(--line,#ddd);background:var(--surface,#fff);color:var(--ink,#111);border-radius:20px;padding:22px 8px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;font:700 20px inherit;cursor:pointer;min-height:190px}
+.prof button:active{border-color:var(--accent)}
+.prof .gz{font-size:96px;line-height:1}.prof .gb{font-size:46px;line-height:1}
 .tabs{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:1 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 9px;font-weight:600;font-size:14px;cursor:pointer}
@@ -164,7 +171,7 @@ input[type=text]{width:100%;font:inherit;border:1px solid var(--line);border-rad
 <div class="wrap">
   <header class="top">
     <p class="brand">Kalistenik <span>3 gün</span></p>
-    <p class="hello">Selam Zeynel</p>
+    <p class="hello" id="hello"></p>
     <nav class="tabs" role="tablist" id="tabs"></nav>
   </header>
   <main id="view"></main>
@@ -3311,8 +3318,14 @@ const OFF=[['pelvic tilt cat cow','Kedi-deve (pelvis odaklı)','2×10'],['jeffer
 Object.entries(STRETCH).forEach(([k,d])=>{if(!DRAW['ST:'+k])DRAW['ST:'+k]=d;});
 
 /* kayıt */
-const KEY='kal-state-v4';
-try{if(!localStorage.getItem(KEY)){const o=JSON.parse(localStorage.getItem('kal-state-v3')||localStorage.getItem('kal-state-v2')||'null');if(o&&o.log)localStorage.setItem(KEY,JSON.stringify({log:o.log}));}}catch(e){}
+const PROFS={zeynel:{ad:'Zeynel',cls:''},bayram:{ad:'Bayram',cls:'s'}};
+const PROF=(()=>{try{const p=localStorage.getItem('kal-profil');return PROFS[p]?p:null;}catch(e){return null;}})();
+function profPick(){const d=document.createElement('div');d.className='prof';d.innerHTML='<h1>Kim antrenman yapıyor?</h1><div class="pp"><button data-prof="zeynel"><span class="gz" aria-hidden="true">🦍</span>Zeynel</button><button data-prof="bayram"><span class="gb" aria-hidden="true">🦍</span>Bayram</button></div><p style="color:var(--muted);font-size:14px;margin:0">Seviyeler ve kayıtlar herkesinkine ayrı tutulur.</p>';
+  d.addEventListener('click',ev=>{const b=ev.target.closest('[data-prof]');if(!b)return;try{localStorage.setItem('kal-profil',b.dataset.prof);}catch(e){}location.reload();});document.body.appendChild(d);}
+const KEY=PROF==='bayram'?'kal-state-v4-bayram':'kal-state-v4';
+(function(){const h=document.getElementById('hello');if(!h)return;if(!PROF){profPick();return;}const P=PROFS[PROF];h.innerHTML='<span class="g '+P.cls+'" aria-hidden="true">🦍</span><span>Selam '+P.ad+'</span><button class="linkbtn" id="profsw" style="margin-left:auto">Kişi değiştir</button>';
+  document.getElementById('profsw').addEventListener('click',()=>{try{localStorage.removeItem('kal-profil');}catch(e){}location.reload();});})();
+try{if(PROF!=='bayram'&&!localStorage.getItem(KEY)){const o=JSON.parse(localStorage.getItem('kal-state-v3')||localStorage.getItem('kal-state-v2')||'null');if(o&&o.log)localStorage.setItem(KEY,JSON.stringify({log:o.log}));}}catch(e){}
 let state={levels:{},log:[],alt:{},fb:{},hist:{},chg:{},tests:[]}, store=null, saveT=null, saving=false, again=false, statusMsg='';
 try{const r=localStorage.getItem(KEY); if(r) state=Object.assign(state,JSON.parse(r));}catch(e){}
 function fixState(){['fb','hist','chg','alt'].forEach(k=>{if(!state[k]||typeof state[k]!=='object')state[k]={};});if(!Array.isArray(state.tests))state.tests=[];}fixState();
@@ -3341,7 +3354,7 @@ function setStatus(m){statusMsg=m;const el=document.getElementById('status'); if
   if(!window.claude||!claude.use) return;
   const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]); if(!db||!user) return;
   const id=await user.id(); if(!id) return;
-  store=db.doc('data/users/'+id+'/state4');
+  store=db.doc('data/users/'+id+'/state4'+(PROF==='bayram'?'-bayram':''));
   let got=false; const tm=setTimeout(()=>{if(!got) setStatus('Kayıtlar henüz yüklenmedi; bu cihazdaki kopya gösteriliyor.');},10000);
   store.onSnapshot(snap=>{got=true;clearTimeout(tm);setStatus('');
     if(snap.exists){const d=snap.data()||{};state={levels:Object.assign({},d.levels||{}),alt:Object.assign({},d.alt||{}),log:(d.log||[]).slice(),fb:Object.assign({},d.fb||{}),hist:Object.assign({},d.hist||{}),chg:Object.assign({},d.chg||{}),tests:(d.tests||[]).slice(),draftNotes:state.draftNotes};fixState();
