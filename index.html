@@ -3318,12 +3318,16 @@ const OFF=[['pelvic tilt cat cow','Kedi-deve (pelvis odaklı)','2×10'],['jeffer
 Object.entries(STRETCH).forEach(([k,d])=>{if(!DRAW['ST:'+k])DRAW['ST:'+k]=d;});
 
 /* kayıt */
-const PROFS={zeynel:{ad:'Zeynel',cls:''},bayram:{ad:'Bayram',cls:'s'}};
+const PROFS={zeynel:{ad:'Zeynel',cls:'',h:'3d8295dca3c20ede915b542f6002d7b063319e889e0e1bd10066ad6469ba0eb3'},bayram:{ad:'Bayram',cls:'s',h:'c78ff0eb8c8dd03b0baf595219c496635ec51480a756b7ddd81481113fca1d8d'}};
+async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 const PROF=(()=>{try{const p=localStorage.getItem('kal-profil');return PROFS[p]?p:null;}catch(e){return null;}})();
 function profPick(){const d=document.createElement('div');d.className='prof';d.innerHTML='<h1>Kim antrenman yapıyor?</h1><div class="pp"><button data-prof="zeynel"><span class="gz" aria-hidden="true">🦍</span>Zeynel</button><button data-prof="bayram"><span class="gb" aria-hidden="true">🦍</span>Bayram</button></div><p style="color:var(--muted);font-size:14px;margin:0">Seviyeler ve kayıtlar herkesinkine ayrı tutulur.</p>';
-  d.addEventListener('click',ev=>{const b=ev.target.closest('[data-prof]');if(!b)return;try{localStorage.setItem('kal-profil',b.dataset.prof);}catch(e){}location.reload();});document.body.appendChild(d);}
+  d.addEventListener('click',ev=>{const b=ev.target.closest('[data-prof]');if(!b)return;const p=b.dataset.prof;d.querySelector('.pp').outerHTML='<form class="pw"><p style="margin:0;font-weight:700;font-size:20px">'+PROFS[p].ad+' · şifre</p><input type="password" inputmode="numeric" autocomplete="off" id="pwi" style="font:700 24px inherit;text-align:center;padding:12px;border-radius:14px;border:2px solid var(--line,#ddd);width:200px;background:var(--surface,#fff);color:var(--ink,#111)"><button type="submit" style="min-height:0;padding:12px 28px;flex-direction:row">Gir</button><p id="pwm" style="color:#c8463d;margin:0;min-height:20px;font-size:15px"></p><a href="#" id="pwb" style="color:var(--muted);font-size:14px">← geri</a></form>';
+    const f=d.querySelector('.pw');f.style.cssText='display:flex;flex-direction:column;align-items:center;gap:12px';const i=d.querySelector('#pwi');setTimeout(()=>i.focus(),50);
+    d.querySelector('#pwb').onclick=e=>{e.preventDefault();d.remove();profPick();};
+    f.onsubmit=async e=>{e.preventDefault();if(await sha('kal:'+i.value.trim())===PROFS[p].h){try{localStorage.setItem('kal-profil',p);}catch(e){}location.reload();}else{d.querySelector('#pwm').textContent='Şifre yanlış';i.value='';i.focus();}};});document.body.appendChild(d);}
 const KEY=PROF==='bayram'?'kal-state-v4-bayram':'kal-state-v4';
-(function(){const h=document.getElementById('hello');if(!h)return;if(!PROF){profPick();return;}const P=PROFS[PROF];h.innerHTML='<span class="g '+P.cls+'" aria-hidden="true">🦍</span><span>Selam '+P.ad+'</span><button class="linkbtn" id="profsw" style="margin-left:auto">Kişi değiştir</button>';
+(function(){const h=document.getElementById('hello');if(!h)return;if(!PROF){profPick();return;}const P=PROFS[PROF];h.innerHTML='<span class="g '+P.cls+'" aria-hidden="true">🦍</span><span>Selam '+P.ad+'</span><small id="cloudst" style="font-weight:500;font-size:12px"></small><button class="linkbtn" id="profsw" style="margin-left:auto">Kişi değiştir</button>';
   document.getElementById('profsw').addEventListener('click',()=>{try{localStorage.removeItem('kal-profil');}catch(e){}location.reload();});})();
 try{if(PROF!=='bayram'&&!localStorage.getItem(KEY)){const o=JSON.parse(localStorage.getItem('kal-state-v3')||localStorage.getItem('kal-state-v2')||'null');if(o&&o.log)localStorage.setItem(KEY,JSON.stringify({log:o.log}));}}catch(e){}
 let state={levels:{},log:[],alt:{},fb:{},hist:{},chg:{},tests:[]}, store=null, saveT=null, saving=false, again=false, statusMsg='';
@@ -3345,7 +3349,20 @@ function stepSvg(h,max){if(!h||h.length<2)return '';const W=120,H=28,t0=h[0].ts,
   let p='M'+xs(h[0].ts).toFixed(1)+' '+ys(h[0].lv).toFixed(1);h.slice(1).forEach(x=>{p+=' H'+xs(x.ts).toFixed(1)+' V'+ys(x.lv).toFixed(1);});
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><path d="${p}" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>`;}
 DAYS.forEach(d=>d.slots.forEach(s=>{if(!s.alt)return;s.base=s.lad;delete s.lad;Object.defineProperty(s,'lad',{get(){const a=state.alt&&state.alt[s.id];return a&&LADDERS[a]&&s.alt.includes(a)?a:s.base;},enumerable:true});}));
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){} if(store){clearTimeout(saveT);saveT=setTimeout(flush,600);}}
+/* bulut kaydı (Firebase Firestore, REST) */
+const FB='https://firestore.googleapis.com/v1/projects/kalistenik-kayit/databases/(default)/documents/kalistenik/',FBK='AIzaSyClXgjeUd0p9_DcN41TMIRvKZlmCjKEwnI';
+let cloudT=null,cloudBusy=false,cloudAgain=false;
+function cloudMark(s){const e=document.getElementById('cloudst');if(e)e.textContent=s;}
+async function cloudPush(){if(!PROF)return;if(cloudBusy){cloudAgain=true;return;}cloudBusy=true;cloudMark('☁ kaydediliyor…');
+  try{const r=await fetch(FB+PROF+'?key='+FBK,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{data:{stringValue:JSON.stringify(state)},ts:{integerValue:String(state._ts||0)}}})});cloudMark(r.ok?'☁ kaydedildi':'☁ kaydedilemedi');}
+  catch(e){cloudMark('☁ çevrimdışı');}cloudBusy=false;if(cloudAgain){cloudAgain=false;cloudPush();}}
+async function cloudPull(){if(!PROF)return;try{const r=await fetch(FB+PROF+'?key='+FBK);if(r.status===404){if(state.log.length||Object.keys(state.levels).length)cloudPush();else cloudMark('☁');return;}if(!r.ok){cloudMark('☁ bağlanamadı');return;}
+  const j=await r.json();const ts=+((j.fields&&j.fields.ts&&j.fields.ts.integerValue)||0);
+  if(ts>(state._ts||0)){const d=JSON.parse(j.fields.data.stringValue);const dn=state.draftNotes;state=Object.assign({levels:{},log:[],alt:{},fb:{},hist:{},chg:{},tests:[]},d);if(dn)state.draftNotes=dn;fixState();try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}if(!open&&!(typeof run!=='undefined'&&run))render(false);cloudMark('☁ güncel');}
+  else if(ts<(state._ts||0))cloudPush();else cloudMark('☁ güncel');}catch(e){cloudMark('☁ çevrimdışı');}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')cloudPull();});
+setTimeout(cloudPull,300);
+function persist(){state._ts=Date.now();clearTimeout(cloudT);cloudT=setTimeout(cloudPush,1200);try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){} if(store){clearTimeout(saveT);saveT=setTimeout(flush,600);}}
 async function flush(){if(!store)return; if(saving){again=true;return;} saving=true;
   try{await store.set({levels:state.levels,alt:state.alt||{},log:state.log.slice(0,300),fb:state.fb,hist:state.hist,chg:state.chg,tests:state.tests.slice(-60)});}catch(e){setStatus('Kayıt buluta gitmedi; bu cihazda saklandı.');}
   saving=false; if(again){again=false;flush();}}
