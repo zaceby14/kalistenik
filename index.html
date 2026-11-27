@@ -672,6 +672,21 @@ header.top{padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px}
 .pw-av span{width:86%;font-size:0}.pw-av.s span{width:58%}.pw-av.xs span{width:36%}
 .hello .av{align-items:end}
 .hello .g{display:block;width:34px;font-size:0;line-height:0}.hello .g.s{width:24px}.hello .g.xs{width:15px}
+
+/* alternatif bölümü */
+.altsec{border:1px solid var(--line);background:var(--surface);border-radius:18px;padding:12px;margin:12px 0;box-shadow:var(--card-sh,none)}
+.altsec-h{display:flex;align-items:center;gap:8px;margin:0 2px 10px;flex-wrap:wrap}.altsec-h b{font-size:16px}.altsec-h span{color:var(--muted);font-size:13px;margin-left:auto}
+.altsec-h svg{width:18px;height:18px;color:var(--accent)}
+.altc{display:grid;grid-template-columns:54px 1fr auto;gap:10px;align-items:center;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:14px;padding:8px;margin-top:8px;cursor:pointer;font:inherit}
+.altc.on{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.altc.cur{background:color-mix(in srgb,var(--ok) 8%,var(--surface))}
+.altc-t{width:54px;height:44px;border-radius:10px;background:var(--stage);overflow:hidden;display:flex}.altc-t svg{width:100%;height:100%}
+.altc-m{display:flex;flex-direction:column;gap:2px;min-width:0}.altc-m b{font-size:14.5px;line-height:1.25}.altc-m small{color:var(--muted);font-size:12.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.altc-s em{font-style:normal;font-size:12px;font-weight:700;padding:4px 8px;border-radius:999px;white-space:nowrap;background:var(--line);color:var(--ink)}
+.altc-s em.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok);display:inline-flex;align-items:center;gap:3px}.altc-s em.ok svg{width:12px;height:12px}
+.altc-s em.pv{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.altprev{position:sticky;top:64px;z-index:5}
+.chip.altchip{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -4025,7 +4040,7 @@ function render(top=true){
     <div class="lhead"><h2>Hareketler</h2><a href="#isinma" data-tab="isinma" class="pillb">${ic('flame')}Isınma + esneme</a></div>
     <div class="list">${d.slots.map((s,i)=>{const L=LADDERS[s.lad],n=lvlOf(s),lv=L.levels[n-1];
       return `<button class="row" data-slot="${s.id}" style="--rc:${REG[s.reg]}"><span class="thumb" aria-hidden="true">${thumbSvg(s.lad,n)}<span class="n">${i+1}</span></span><span class="rmain"><p class="rtitle">${esc(lv.tr)}</p>
-      <span class="meta"><span class="chip" style="color:${REG[s.reg]}">${s.reg}</span>${(()=>{const c=state.chg[lkey(s)];return c&&Date.now()-c.ts<10*864e5?`<span class="chip up">${c.to>c.from?'↑':'↓'} ${c.to}</span>`:'';})()}<span>${doseOf(s,lv)}</span></span><span class="lvrow">${dots(L.levels.length,n)}<span class="lvl">Sv ${n}/${L.levels.length}</span></span></span><span class="go" aria-hidden="true">${ic('chev')}</span></button>`;}).join('')}</div>
+      <span class="meta"><span class="chip" style="color:${REG[s.reg]}">${s.reg}</span>${(()=>{const c=state.chg[lkey(s)];return c&&Date.now()-c.ts<10*864e5?`<span class="chip up">${c.to>c.from?'↑':'↓'} ${c.to}</span>`:'';})()}<span>${doseOf(s,lv)}</span>${s.alt?`<span class="chip altchip">${s.lad!==s.base?'⇄ Alternatif':'⇄ +'+s.alt.length+' seçenek'}</span>`:''}</span><span class="lvrow">${dots(L.levels.length,n)}<span class="lvl">Sv ${n}/${L.levels.length}</span></span></span><span class="go" aria-hidden="true">${ic('chev')}</span></button>`;}).join('')}</div>
     <p class="note" style="margin-top:16px"><b>Bitiş:</b> ${d.end}</p><p class="status" id="status">${statusMsg}</p>`;
   } else if(cur==='isinma'){
     v.innerHTML=`<div class="shead"><h2>Isınma · her gün</h2>${wcSpan(WARM,'WARM')}</div><p class="sub">≈ 5 dk. Barfiks için omuz hazırlığı burada. Bitirdiğini işaretle.</p>${stList(WARM,'WARM')}
@@ -4063,8 +4078,9 @@ function openSlot(id,view,ctx){
   const sh=$('#sheet');
   sh.innerHTML=`<div class="wrap">
    <div class="bar sbar"><button class="back" id="back">${ic('back')}<span>${inRun?'Antrenmana dön':d.t}</span></button><span class="chip" style="color:${REG[s.reg]}">${s.reg}</span></div>
-   ${s.alt?`<div class="alts" role="tablist" aria-label="Hareket seçimi">${[s.base,...s.alt].map(a=>`<button class="altb ${a===s.lad?'on':''}" data-alt="${a}">${a===committedLad(s)?ic('check'):''}${a===s.base?'Ana: ':''}${esc(ALTN[a]||LADDERS[a].name)}</button>`).join('')}</div>${s.lad!==committedLad(s)?`<div class="chg"><span>Önizleme — programdaki hareket değişmedi</span><button class="btn" data-altuse="${s.lad}" style="width:auto;padding:8px 14px">Bunu kullan</button></div>`:''}`:''}
+   ${s.lad!==committedLad(s)?`<div class="chg altprev"><span><b>Önizleme</b> · programda hâlâ “${esc(ALTN[committedLad(s)]||LADDERS[committedLad(s)].name)}” var</span><button class="btn" data-altuse="${s.lad}" style="width:auto;padding:10px 16px">Bunu kullan</button></div>`:''}
    <div class="ttl"><p class="lvname">${esc(lv.tr)}</p><p class="en">${esc(lv.en)}</p><p class="lvchips"><span class="lvc">Seviye ${vl}/${L.levels.length}</span>${vl===chosen?'<span class="lvc me">Senin seviyen</span>':''}</p>${L.trains?`<p class="en" style="margin-top:2px"><b>${esc(L.name)}</b> — ${esc(L.trains)}</p>`:''}</div>
+   ${s.alt?`<div class="altsec"><div class="altsec-h">${ic('swap')}<b>Bu slotun seçenekleri</b><span>${s.alt.length+1} hareket · birini seç</span></div>${[s.base,...s.alt].map(a=>{const LL=LADDERS[a],cur=committedLad(s)===a,vw=s.lad===a,nn=state.levels[a===s.base?s.id:s.id+':'+a]??(a===s.base?s.def:1);return `<button class="altc ${vw?'on':''} ${cur?'cur':''}" data-alt="${a}"><span class="altc-t">${thumbSvg(a,Math.min(nn,LL.levels.length))}</span><span class="altc-m"><b>${a===s.base?'Ana hareket · ':'Alternatif · '}${esc(ALTN[a]||LL.name)}</b><small>${esc(LL.trains||LL.name)}</small></span><span class="altc-s">${cur?`<em class="ok">${ic('check')} Programda</em>`:vw?'<em>Bakıyorsun</em>':'<em class="pv">Önizle</em>'}</span></button>`;}).join('')}</div>`:''}
    ${(()=>{const c=state.chg[lkey(s)];return c&&Date.now()-c.ts<21*864e5?`<div class="chg"><span>${c.to>c.from?'↑':'↓'} Seviye ${c.from} → ${c.to} (${esc(c.why)})</span><button class="linkbtn" id="undo">Geri al</button></div>`:'';})()}
    ${histLine(s)?`<p class="en">Geçmiş: ${histLine(s)} ${stepSvg(state.hist[lkey(s)],L.levels.length)}</p>`:''}
    ${vl!==chosen?`<button class="btn" id="pick">${inRun?'Bu seviyeye geç · antrenmana dön':'Bu seviyeye geç'}</button>`:''}
