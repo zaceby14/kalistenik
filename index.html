@@ -692,6 +692,26 @@ header.top{padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px}
 .ralt .as-l{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--muted);width:100%}.ralt .as-l svg{width:14px;height:14px}
 .asb{display:inline-flex;align-items:center;gap:4px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font:600 13px inherit;cursor:pointer;max-width:100%;text-align:left}
 .asb svg{width:13px;height:13px}.asb.on{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--surface));color:var(--ok)}
+
+/* profil sahneleri */
+.prof .pp{grid-template-columns:1fr 1fr}
+.prof .pp>button,.prof .pp button[data-prof=misafir]{grid-column:auto;min-height:196px;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px}
+.prof .pp button[data-prof=misafir] .gw{flex:1;width:100%;padding-bottom:8px}
+.prof .pp>button:nth-child(4){animation-delay:.52s}
+.gsc{position:relative;z-index:1;display:block;line-height:0;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45))}
+.gsc svg{display:block;width:100%;height:auto}
+.gsc-zeynel{width:118px}.gsc-bayram{width:150px}.gsc-tufan{width:142px}.gsc-misafir{width:54px;transform-origin:50% 100%;animation:v2gor 3.4s ease-in-out infinite}
+.prof .gsc-bayram~.gsh{width:120px;margin-left:-60px;opacity:.6}.prof .gsc-tufan~.gsh{opacity:.25}.prof .gsc-zeynel~.gsh{opacity:.35}.prof .gsc-misafir~.gsh{width:40px;margin-left:-20px}
+.pw-av.pw-zeynel span,.pw-av.pw-tufan span{width:88%}.pw-av.pw-bayram span{width:92%}.pw-av.pw-misafir span{width:40%}
+.pw-av>span{animation:none}.pw-av.pw-misafir>span{animation:v2gor 3.4s ease-in-out infinite}
+.pw-av{align-items:center}.pw-av.pw-misafir{align-items:end}
+.hello .av-zeynel .g,.hello .av-bayram .g,.hello .av-tufan .g{width:40px}
+.hello .av-zeynel,.hello .av-bayram,.hello .av-tufan{align-items:center;width:44px;height:44px}
+@media (prefers-reduced-motion:reduce){.gsc-misafir,.pw-av.pw-misafir>span{animation:none}}
+
+/* çizim etiketi çizimin üstünde ayrı şeritte: SVG içindeki yazılarla çakışmaz */
+.stage .tag{position:relative;top:auto;left:auto;display:inline-flex;margin:10px 0 0 10px;z-index:1}
+.stage .anim{margin-top:2px}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -829,15 +849,22 @@ function headSvg(J,col){const h=J.head,c=col||'var(--ink)',F_=n=>n.toFixed(3);le
   return s;}
 const ease=t=>.5-.5*Math.cos(Math.PI*t);
 /* koç çizgileri: hareket oynar, kilit karede durunca yumuşakça belirir, sonra kaybolur */
-const CUEH=2.2;function cueOp(t,d,on){if(!on)return 0;const a=.45,b=d-.35;if(t<a||t>d)return 0;const fi=Math.min(1,(t-a)/.4),fo=Math.min(1,Math.max(0,(d-t)/.35));return ease(Math.min(fi,fo));}
-function timeline(d){const k=d.k,n=k.length,seg=[];
-  for(let i=0;i<n;i++){seg.push({a:i,b:i,d:(k[i].hold??.8)+(k[i].cue?CUEH:0)}); if(i<n-1) seg.push({a:i,b:i+1,d:k[i].go??1.2});}
-  for(let i=n-1;i>0;i--){if(i<n-1) seg.push({a:i,b:i,d:(k[i].hold??.8)+(k[i].cue?CUEH:0)}); seg.push({a:i,b:i-1,d:k[i].back??1.2});}
+const CUEH=3.2;function cueOp(t,d,on){if(!on)return 0;const a=.45,b=d-.35;if(t<a||t>d)return 0;const fi=Math.min(1,(t-a)/.4),fo=Math.min(1,Math.max(0,(d-t)/.35));return ease(Math.min(fi,fo));}
+function timeline(d,plain){const k=d.k,n=k.length,seg=[],ch=i=>plain?0:(k[i].cue?CUEH:0);
+  for(let i=0;i<n;i++){seg.push({a:i,b:i,d:(k[i].hold??.8)+ch(i)}); if(i<n-1) seg.push({a:i,b:i+1,d:k[i].go??1.2});}
+  for(let i=n-1;i>0;i--){if(i<n-1) seg.push({a:i,b:i,d:(k[i].hold??.8)+ch(i)}); seg.push({a:i,b:i-1,d:k[i].back??1.2});}
   return seg;}
-function poseAt(d,time){const su=setupOf(d);if(su){const SD=suDur(su),L=suLen(su),tot=d._tot||(d._tot=(d._tl||(d._tl=timeline(d))).reduce((s,x)=>s+x.d,0)),tt=time%(L+tot);
-  if(tt<L){const i=Math.min(su.length-1,Math.floor(tt/SD)),u=Math.min(1,(tt-i*SD)/SD);return{p:setupPose(d,su,i,u),cap:(i+1)+'/'+su.length+' · '+su[i].label,cop:0,su:{i,u,n:su.length,st:su[i],d}};}
-  return poseAt0(d,tt-L);}return poseAt0(d,time);}
-function poseAt0(d,time){const seg=d._tl||(d._tl=timeline(d)),tot=d._tot||(d._tot=seg.reduce((s,x)=>s+x.d,0));
+/* döngü: önce 1 tur sade hareket (yazı/çizgi yok) → kurulum adımları → koç çizgili tur */
+function tlOf(d,plain){if(plain){const s=d._tlp||(d._tlp=timeline(d,1));return{sg:s,tot:d._totp||(d._totp=s.reduce((a,x)=>a+x.d,0))};}
+  const s=d._tl||(d._tl=timeline(d));return{sg:s,tot:d._tot||(d._tot=s.reduce((a,x)=>a+x.d,0))};}
+function phaseOf(d,time){const P=tlOf(d,1).tot,M=tlOf(d,0).tot,su=setupOf(d),L=su?suLen(su):0,tt=((time%(P+L+M))+(P+L+M))%(P+L+M);
+  if(tt<P)return{ph:'plain',t:tt};if(tt<P+L)return{ph:'setup',t:tt-P,su};return{ph:'main',t:tt-P-L};}
+function segAt(d,time){const m=phaseOf(d,time);if(m.ph==='setup')return{a:0,b:0,t:0};const {sg,tot}=tlOf(d,m.ph==='plain');
+  let t=m.t%tot;for(const s of sg){if(t<=s.d) return s.a===s.b?{a:s.a,b:s.a,t:0}:{a:s.a,b:s.b,t:ease(t/s.d)};t-=s.d;}return{a:0,b:0,t:0};}
+function poseAt(d,time){const m=phaseOf(d,time);
+  if(m.ph==='setup'){const su=m.su,SD=suDur(su),tt=m.t,i=Math.min(su.length-1,Math.floor(tt/SD)),u=Math.min(1,(tt-i*SD)/SD);return{p:setupPose(d,su,i,u),cap:(i+1)+'/'+su.length+' · '+su[i].label,cop:0,su:{i,u,n:su.length,st:su[i],d}};}
+  const r=poseAt0(d,m.t,m.ph==='plain');if(m.ph==='plain'){r.cop=0;r.plain=1;}return r;}
+function poseAt0(d,time,plain){const {sg:seg,tot}=tlOf(d,plain);
   let t=time%tot;for(const s of seg){if(t<=s.d) return s.a===s.b?{p:d.k[s.a],cap:d.k[s.a].cap,cop:cueOp(t,s.d,!!d.k[s.a].cue)}:{p:mix(d.k[s.a],d.k[s.b],ease(t/s.d)),cap:(t/s.d<.5?d.k[s.a]:d.k[s.b]).cap};t-=s.d;}return{p:d.k[0],cap:d.k[0].cap};}
 function bounds(d){if(d._b) return d._b;let xs=[],ys=[0];
   const add=p=>{const J=joints(p);[J.S,J.P,J.head,...J.legs.flatMap(l=>[l[0],l[1]]),...J.arms.flatMap(l=>[l[0],l[1]])].forEach(q=>{xs.push(q[0]);ys.push(q[1]);});ys.push(J.head[1]+.12);xs.push(J.head[0]-.12,J.head[0]+.12);};
@@ -1615,9 +1642,7 @@ const X=n=>n.toFixed(3),Yv=y=>X(-y);
 const LN=(a,c,col,w,ex='')=>`<line x1="${X(a[0])}" y1="${Yv(a[1])}" x2="${X(c[0])}" y2="${Yv(c[1])}" stroke="${col}" stroke-width="${X(w)}" stroke-linecap="round" ${ex}/>`;
 const RC=(x1,x2,y0,y1,ex)=>`<rect x="${X(x1)}" y="${Yv(y1)}" width="${X(x2-x1)}" height="${X(y1-y0)}" ${ex}/>`;
 const SEG=(a,c,col,w)=>LN(a,c,'var(--stage)',w+.04)+LN(a,c,col,w);
-function segOf(d,time){const sg=d._tl||(d._tl=timeline(d)),tot=d._tot||(d._tot=sg.reduce((s,x)=>s+x.d,0));
-  {const su=setupOf(d);if(su){const L=suLen(su),tt=time%(L+tot);if(tt<L)return{a:0,b:0,t:0};time=tt-L;}}
-  let t=time%tot;for(const s of sg){if(t<=s.d) return s.a===s.b?{a:s.a,b:s.a,t:0}:{a:s.a,b:s.b,t:ease(t/s.d)};t-=s.d;}return{a:0,b:0,t:0};}
+function segOf(d,time){return segAt(d,time);}
 const lv=(A,B,t)=>Array.isArray(A)?A.map((v,i)=>lv(v,B[i],t)):lerp(A,B,t);
 /* sahne öğeleri */
 const G={
@@ -1898,8 +1923,7 @@ const X=n=>n.toFixed(3),Yv=y=>X(-y);
 const LN=(a,c,col,w,ex='')=>`<line x1="${X(a[0])}" y1="${Yv(a[1])}" x2="${X(c[0])}" y2="${Yv(c[1])}" stroke="${col}" stroke-width="${X(w)}" stroke-linecap="round" ${ex}/>`;
 const RC=(x1,x2,y0,y1,ex)=>`<rect x="${X(x1)}" y="${Yv(y1)}" width="${X(x2-x1)}" height="${X(y1-y0)}" ${ex}/>`;
 const SEG=(a,c,col,w)=>LN(a,c,'var(--stage)',w+.04)+LN(a,c,col,w);
-function d12seg(d,time){const sg=d._tl||(d._tl=timeline(d)),tot=d._tot||(d._tot=sg.reduce((s,x)=>s+x.d,0));
-  let t=time%tot;for(const s of sg){if(t<=s.d) return s.a===s.b?{a:s.a,b:s.a,t:0}:{a:s.a,b:s.b,t:ease(t/s.d)};t-=s.d;}return{a:0,b:0,t:0};}
+function d12seg(d,time){return segAt(d,time);}
 const lv=(A,B,t)=>Array.isArray(A)?A.map((v,i)=>lv(v,B[i],t)):lerp(A,B,t);
 /* sahne öğeleri */
 const G12={
@@ -2132,8 +2156,7 @@ const d13X=n=>n.toFixed(3),d13Y=y=>d13X(-y),PRC='var(--prop)';
 const d13LN=(a,c,col,w,ex='')=>`<line x1="${d13X(a[0])}" y1="${d13Y(a[1])}" x2="${d13X(c[0])}" y2="${d13Y(c[1])}" stroke="${col}" stroke-width="${d13X(w)}" stroke-linecap="round" ${ex}/>`;
 const d13RC=(x1,x2,y0,y1,ex)=>`<rect x="${d13X(x1)}" y="${d13Y(y1)}" width="${d13X(x2-x1)}" height="${d13X(y1-y0)}" ${ex}/>`;
 const d13SEG=(a,c,col,w)=>d13LN(a,c,'var(--stage)',w+.04)+d13LN(a,c,col,w);
-function d13seg(d,time){const sg=d._tl||(d._tl=timeline(d)),tot=d._tot||(d._tot=sg.reduce((s,x)=>s+x.d,0));
-  let t=time%tot;for(const s of sg){if(t<=s.d) return s.a===s.b?{a:s.a,b:s.a,t:0}:{a:s.a,b:s.b,t:ease(t/s.d)};t-=s.d;}return{a:0,b:0,t:0};}
+function d13seg(d,time){return segAt(d,time);}
 const d13lv=(A,B,t)=>Array.isArray(A)?A.map((v,i)=>d13lv(v,B[i],t)):lerp(A,B,t);
 /* sahne öğeleri */
 const d13G={
@@ -3634,9 +3657,7 @@ Object.entries(D).forEach(([k,d])=>{
   DRAW['ST:'+k]=d;});
 
 /* ---------- ek katman ---------- */
-function segOf(d,time){const sg=d._tl||(d._tl=timeline(d)),tot=d._tot||(d._tot=sg.reduce((s,x)=>s+x.d,0));
-  {const su=setupOf(d);if(su){const L=suLen(su),tt=time%(L+tot);if(tt<L)return{a:0,b:0,t:0};time=tt-L;}}
-  let t=time%tot;for(const s of sg){if(t<=s.d) return s.a===s.b?{a:s.a,b:s.a,t:0}:{a:s.a,b:s.b,t:ease(t/s.d)};t-=s.d;}return{a:0,b:0,t:0};}
+function segOf(d,time){return segAt(d,time);}
 const Y=y=>-y;
 const L2=(a,c,col,w,ex='')=>`<line x1="${F(a[0])}" y1="${F(Y(a[1]))}" x2="${F(c[0])}" y2="${F(Y(c[1]))}" stroke="${col}" stroke-width="${F(w)}" stroke-linecap="round" ${ex}/>`;
 const ref=(J,r)=>typeof r!=='string'?r:r==='P'?J.P:r==='S'?J.S:r[0]==='h'?J.arms[+r[1]][1]:J.legs[+r[1]][1];
@@ -4012,7 +4033,7 @@ const ART={"HS_LINE:1":{"0":{"sh":-0.05,"sc":1},"1":{"sh":0.06}},"HS_LINE:7":{"0
 /* ===== anatomi koçu v2: hareket hareket biyomekanik düzeltmeler =====
    FXP: kareyi yeni pozla değiştirir (cap/hold/go/back korunur); sınırlar eski kutu ile birleştirilir. */
 function fxBox(d){const o=d._b;let xs=[],ys=[];const add=p=>{const J=joints(p);[J.S,J.P,J.head,...J.legs.flatMap(l=>[l[0],l[1]]),...J.arms.flatMap(l=>[l[0],l[1]])].forEach(q=>{xs.push(q[0]);ys.push(q[1]);});ys.push(J.head[1]+.12,J.head[1]-.12);xs.push(J.head[0]-.12,J.head[0]+.12);};
-  d.k.forEach((p,i)=>{add(p);if(i<d.k.length-1)for(let s=1;s<4;s++)add(mix(p,d.k[i+1],s/4));});d._tl=null;d._tot=null;
+  d.k.forEach((p,i)=>{add(p);if(i<d.k.length-1)for(let s=1;s<4;s++)add(mix(p,d.k[i+1],s/4));});d._tl=null;d._tot=null;d._tlp=null;d._totp=null;
   if(!o){d._b=null;return;}const pad=.16;let x0=Math.min(o.x,Math.min(...xs)-pad),x1=Math.max(o.x+o.w,Math.max(...xs)+pad),yt=Math.max(-o.y,Math.max(...ys)+pad),yb=Math.min(-(o.y+o.h),Math.min(...ys)-pad);
   let w=x1-x0,h=yt-yb;const ar=o.w/o.h;if(w/h<ar)w=h*ar;else h=w/ar;d._b={x:(x0+x1)/2-w/2,y:-(yb+(yt-yb)/2+h/2),w,h};}
 function FXP(k,i,np){const d=DRAW[k];if(!d||!d.k[i])return;const old=d.k[i];['cap','hold','go','back','sc','rb','lb','sh','sn','gz','sup','facing'].forEach(q=>{if(np[q]===undefined&&old[q]!==undefined)np[q]=old[q];});d.k[i]=np;}
@@ -4066,7 +4087,7 @@ const CUE_FAM={"plank": [{"part": "hands", "label": "Eller omuz altında, eller 
 const CUE_LAD={"PL_LEAN": "planche_lean", "PL_TUCK": "planche_lean", "PL_PUSH": "planche_lean", "PL": "planche_lean", "PL_BENT": "bent_balance", "HS": "handstand", "HS_BAL": "handstand", "HS_LINE": "handstand", "HS_SHIFT": "handstand", "HS_ENTRY": "handstand", "PWALL": "handstand", "HS_PARA": "parallette", "PPU": "pike_push", "PPU_HSPU": "pike_push", "DIP": "dip", "PU_VERT": "hang_pull", "PU_CHIN": "hang_pull", "PU_ISO": "hang_pull", "PU_GRIP": "hang_pull", "PU_LAT": "straight_arm_lat", "PU_SHLD": "shoulder_prehab", "LSIT": "lsit", "COMP": "lsit", "LS_COMP": "lsit", "LS_TUCK": "lsit", "LS_HOLD": "lsit", "LS_CROSS": "lsit", "LS_STRADDLE": "lsit", "LS_ACTIVE": "active_flex", "LS_HANG": "hang_legraise", "CORE_HOLLOW": "hollow", "CORE_PELVIS": "hollow", "CORE_ARCH": "arch", "PRESS": "press", "PR_STRAD": "press", "PR_LEAN": "press", "PR_TUCK": "press", "PR_COMP": "press", "PR_WALL": "press", "PR_HEAD": "headstand", "LG_QUAD": "single_leg", "LG_KNEE": "knee_quad", "LG_HINGE": "hinge", "LG_NORDIC": "nordic"};
 const CUE_LVL={"ST:scapular push ups": {"fam": "plank", "key": {"1": ["headfwd"]}}, "HS_BAL:1": {"fam": "headstand"}, "HS_BAL:2": {"fam": "bent_balance", "note": "frog stand: dizler dirsek dışında"}, "HS_BAL:3": {"add": [{"part": "fingers", "label": "Parmak uçlarıyla it, avuç hafif kalkar", "short": "parmak ucu", "inset": "hands-pressure"}]}, "HS_LINE:1": {"fam": "pike_push", "only": ["hands", "arm", "ribs", "pelvis", "scap"], "note": "pike shrug: sadece omuz kulağa-aşağı"}, "HS_LINE:6": {"add": [{"part": "hands", "label": "Eller duvara 10–20 cm, göğüs duvarda", "short": "el duvara yakın"}]}, "PU_CHIN": {"override": {"hands": {"part": "hands", "label": "Avuç sana dönük (supine), omuz genişliği/dar", "short": "avuç sana", "inset": "grip-underhand"}}}, "PU_CHIN:6": {"override": {"hands": {"part": "hands", "label": "Karışık tutuş: bir avuç dışa bir avuç içe", "short": "karışık tutuş", "inset": "grip-mixed"}}}, "PU_CHIN:9": {"override": {"hands": {"part": "hands", "label": "Commando: eller bar boyunca, avuçlar karşılıklı", "short": "commando", "inset": "grip-commando"}}}, "PU_VERT:5": {"override": {"hands": {"part": "hands", "label": "Avuç sana dönük (chin-up)", "short": "avuç sana", "inset": "grip-underhand"}}}, "PU_VERT:9": {"override": {"hands": {"part": "hands", "label": "Geniş tutuş: omzun 1,5 katı, avuç dışa", "short": "geniş tutuş", "inset": "grip-wide"}}}, "PU_VERT:11": {"add": [{"part": "legs", "label": "L-sit: bacaklar yatay, diz kilitli", "short": "bacak yatay"}]}, "PU_VERT:12": {"add": [{"part": "arm", "label": "Okçu: yan kol düz, çeken kol bükük", "short": "okçu kol"}]}, "PU_GRIP":{"drop":["arm"]},"DIP:1":{"drop":["arm2"]},"DIP:2":{"drop":["arm2"]},"PU_GRIP:3": {"override": {"hands": {"part": "hands", "label": "Bir el barda overhand, bir el havluda (çekiç tutuş)", "short": "havlu tutuş", "inset": "grip-towel"}}}, "PU_GRIP:5": {"override": {"hands": {"part": "hands", "label": "İki havlu: çekiç tutuş, avuçlar karşılıklı", "short": "havlu tutuş", "inset": "grip-towel"}}}, "PL_BENT:5": {"note": "elbow lever", "add": [{"part": "arm", "label": "Dirsekleri karın yanına, kalça kemiği üstüne", "short": "dirsek kalçada"}]}, "PL_LEAN:1": {"override": {"legs": {"part": "legs", "label": "Dizler yerde, ayak üstleri yerde", "short": "diz yerde"}}}, "PL_LEAN:3": {"override": {"hands": {"part": "hands", "label": "Parallette nötr tutuş, bilek düz", "short": "nötr tutuş", "inset": "grip-parallette"}}}, "PL_TUCK": {"add": [{"part": "knees", "label": "Dizler göğse, kalça omuz hizasına kalkar", "short": "diz göğse"}]}, "DIP:9": {"add": [{"part": "legs", "label": "L-sit: bacaklar yatay, diz kilitli", "short": "bacak yatay"}]}, "DIP:10": {"note": "Russian dip: önkola inip tekrar it; dirsek arkada"}, "LS_HANG:2": {"add": [{"part": "pelvis", "label": "Kuyruk sokumunu yukarı kıvır", "short": "kuyruk kıvrık", "type": "rot"}]}, "LS_CROSS": {"override": {"legs": {"part": "legs", "label": "Bağdaş: ayak bilekleri çapraz, dizler yana", "short": "bağdaş"}}}, "LS_STRADDLE": {"override": {"legs": {"part": "legs", "label": "Bacaklar geniş açık, dizler tavana, ayak ucu sivri", "short": "straddle", "inset": "straddle-top"}}}, "LS_TUCK": {"override": {"legs": {"part": "legs", "label": "Dizler göğse yakın, ayaklar bitişik", "short": "tuck"}}}, "CORE_HOLLOW:10": {"fam": "plank", "note": "body saw: önkol plank, omuz önüne kayar"}, "LG_KNEE:1": {"note": "duvar oturuşu: diz 90°, sırt duvarda düz"}, "LG_HINGE:1": {"only": ["feet", "pelvis", "neck"]}, "LG_HINGE:2": {"only": ["feet", "pelvis", "pelvis2", "neck"]}, "LG_HINGE:3": {"only": ["feet", "pelvis", "pelvis2", "neck"]}, "LG_QUAD:12": {"add": [{"part": "legs", "label": "Serbest bacak düz önde, ayak flex", "short": "serbest bacak önde"}]}, "LG_QUAD:11": {"add": [{"part": "legs", "label": "Arka diz bükük, ayak elde", "short": "arka ayak elde"}]}};
 
-function suDur(su){return su.length>5?1.5:1.9;}
+function suDur(su){return su.length>5?2.7:3.1;}
 function suLen(su){return su.length*suDur(su)+.4;}
 /* bölgeye göre varsayılan poz sapması (kurulum başında hata → adımda düzelir) */
 function defMod(fam,s){const l=(s.label||'')+' '+(s.short||'');
@@ -4266,7 +4287,7 @@ function applyCues(){const A3=(a,b,c)=>{const u=[a[0]-b[0],a[1]-b[1]],v=[c[0]-b[
   if(c==='LG_HINGE')return 'hinge';
   if(c==='LG_NORDIC')return 'nordic';
   if(c==='ST')return 'st';return 'gen';};
- Object.entries(DRAW).forEach(([k,d])=>{d._key=k;if(!d.k||!d.k.length)return;const cu0=CUE_LVL[k];if(cu0&&cu0.key)Object.entries(cu0.key).forEach(([i,a])=>{const p=d.k[+i];if(p){p.cue=p.cue||[];a.forEach(x=>{if(!p.cue.includes(x))p.cue.unshift(x);});}});const c=k.split(':')[0],r=RULE(c),side=d.k.map((p,i)=>i).filter(i=>!d.k[i].front);const fr=d.k.map((p,i)=>i).filter(i=>d.k[i].front);if(!side.length){frontCues(k,d,fr);d._tl=null;d._tot=null;return;}
+ Object.entries(DRAW).forEach(([k,d])=>{d._key=k;if(!d.k||!d.k.length)return;const cu0=CUE_LVL[k];if(cu0&&cu0.key)Object.entries(cu0.key).forEach(([i,a])=>{const p=d.k[+i];if(p){p.cue=p.cue||[];a.forEach(x=>{if(!p.cue.includes(x))p.cue.unshift(x);});}});const c=k.split(':')[0],r=RULE(c),side=d.k.map((p,i)=>i).filter(i=>!d.k[i].front);const fr=d.k.map((p,i)=>i).filter(i=>d.k[i].front);if(!side.length){frontCues(k,d,fr);d._tl=null;d._tot=null;d._tlp=null;d._totp=null;return;}
   const M=d.k.map(p=>p.front?null:met(p)),last=side[side.length-1],add=(i,q)=>{if(i==null||d.k[i].front)return;const p=d.k[i];p.cue=p.cue||[];if(!p.cue.includes(q)&&p.cue.length<2)p.cue.push(q);};
   const argmin=f=>side.reduce((b,i)=>f(M[i])<f(M[b])?i:b,side[0]),argmax=f=>side.reduce((b,i)=>f(M[i])>f(M[b])?i:b,side[0]);
   const scapF=side.filter(i=>Math.abs(M[i].pr)>.02),shF=side.filter(i=>Math.abs(M[i].sh)>.025);
@@ -4297,7 +4318,7 @@ function applyCues(){const A3=(a,b,c)=>{const u=[a[0]-b[0],a[1]-b[1]],v=[c[0]-b[
     const H=a[1],z=[J.legs.reduce((s,l)=>s+l[1][0],0)/J.legs.length,J.legs.reduce((s,l)=>s+l[1][1],0)/J.legs.length],dx=z[0]-H[0],dy=z[1]-H[1],l=Math.hypot(dx,dy)||1,dv=q=>Math.abs(((q[0]-H[0])*dy-(q[1]-H[1])*dx)/l),off=Math.max(dv(a[3]),dv(J.P)),head=J.head[1]<.2;
     const spread=J.legs.length>1&&Math.hypot(J.legs[0][1][0]-J.legs[1][1][0],J.legs[0][1][1]-J.legs[1][1][1])>.3;
     if(head)p.cue=p.cue.map(x=>x==='stack'?'line':x);else if(off>=.07||spread)p.cue=p.cue.filter(x=>x!=='stack');});
-  d._tl=null;d._tot=null;d._b=null;});}
+  d._tl=null;d._tot=null;d._tlp=null;d._totp=null;d._b=null;});}
 function applyArt(){Object.entries(ART).forEach(([k,m])=>{const d=DRAW[k];if(!d||!d.k)return;Object.entries(m).forEach(([i,v])=>{const p=d.k[+i];if(p)Object.assign(p,v);});if(Object.values(m).some(v=>v.sc))d.k.forEach(p=>{p.sc=1;});d._b=null;});}
 Object.values(DRAW).forEach(d=>{if(!d||!d.k)return;d.k.forEach(p=>{if(p.sc||p.front)return;const c=p.cap||'';
   if(/hollow|kambur|sırtı yuvarla|çanak|bel yere bas|kürekler yerden/i.test(c))p.rb=.035;
@@ -4318,20 +4339,21 @@ applyArt();applySns();
   /* ayaklar yerinde kalır: gövde açısını bacak boyu tutacak şekilde bul (ayak ucuna yuvarlanır) */
   let best=null;for(let a=150;a<=230;a+=.1){const P=[S[0]+TR*Math.cos(a*RD0),S[1]+TR*Math.sin(a*RD0)],e=Math.abs(Math.hypot(P[0]-F0[0],P[1]-F0[1])-LG*.998);if(!best||e<best[0])best=[e,P];}
   p.S=S;p.P=best[1];p.feet=p.feet.map(f=>[F0[0]+fa*.03,F0[1],...f.slice(2)]);
-  p.pr=.13;p.rb=.15;p.h=(p.h||0)-6;if(d.d7)d.d7.arch=[0,.11];d._b=null;d._tl=null;d._tot=null;}}
+  p.pr=.13;p.rb=.15;p.h=(p.h||0)-6;if(d.d7)d.d7.arch=[0,.11];d._b=null;d._tl=null;d._tot=null;d._tlp=null;d._totp=null;}}
 applyCues();
 
 /* kayıt */
-const PROFS={zeynel:{ad:'Zeynel',cls:'',h:'3d8295dca3c20ede915b542f6002d7b063319e889e0e1bd10066ad6469ba0eb3'},bayram:{ad:'Bayram',cls:'s',h:'c78ff0eb8c8dd03b0baf595219c496635ec51480a756b7ddd81481113fca1d8d'},misafir:{ad:'Misafir',cls:'xs'}};
+const PROFS={zeynel:{ad:'Zeynel',cls:'',h:'3d8295dca3c20ede915b542f6002d7b063319e889e0e1bd10066ad6469ba0eb3'},bayram:{ad:'Bayram',cls:'s',h:'c78ff0eb8c8dd03b0baf595219c496635ec51480a756b7ddd81481113fca1d8d'},tufan:{ad:'Tufan',cls:'',h:'97626fa59f6cfdb43a4613a57a541f1a3f88836299a93c48cde7d6d2e8930289'},misafir:{ad:'Misafir',cls:'xs'}};
 async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 const PROF=(()=>{try{const p=localStorage.getItem('kal-profil');return PROFS[p]?p:null;}catch(e){return null;}})();
-function profPick(){const d=document.createElement('div');d.className='prof';d.innerHTML='<div class="prof-glow" aria-hidden="true"></div><p class="prof-brand">Kalistenik <span>3 gün</span></p><h1><span>Kim</span> <span>antrenman</span> <span>yapıyor?</span></h1><div class="pp"><button data-prof="zeynel"><span class="gw"><span class="gz" aria-hidden="true">'+gorSvg('pg')+'</span><i class="gsh"></i></span><span class="pn">Zeynel</span><small>'+ic('lock')+'Şifreli</small></button><button data-prof="bayram"><span class="gw"><span class="gb" aria-hidden="true">'+gorSvg('pg')+'</span><i class="gsh"></i></span><span class="pn">Bayram</span><small>'+ic('lock')+'Şifreli</small></button><button data-prof="misafir"><span class="gw"><span class="gm" aria-hidden="true">'+gorSvg('pg')+'</span></span><span class="pn">Misafir</span><small>Sadece bu cihaz</small></button></div><p class="pfoot">Seviyeler ve kayıtlar herkesinkine ayrı tutulur.</p>';
-  d.addEventListener('click',ev=>{const b=ev.target.closest('[data-prof]');if(!b)return;const p=b.dataset.prof;if(!PROFS[p].h){try{localStorage.setItem('kal-profil',p);}catch(e){}location.reload();return;}d.querySelector('.pp').outerHTML='<form class="pw"><span class="pw-av '+(PROFS[p].cls||'')+'" aria-hidden="true"><span>'+gorSvg('pg')+'</span></span><p class="pw-t">'+PROFS[p].ad+'</p><p class="pw-s">Şifreni gir</p><input type="password" inputmode="none" readonly autocomplete="off" id="pwi" class="pw-in" aria-label="Şifre"><div class="pw-dots" aria-hidden="true"></div><p id="pwm" class="pw-m" role="alert"></p>'+pinPad()+'<button type="submit" class="pw-go" hidden>Gir</button><a href="#" id="pwb" class="pw-b">'+ic('back')+'Geri</a></form>';
+function profCards(){return ['zeynel','bayram','tufan','misafir'].map(p=>{const P=PROFS[p];return '<button data-prof="'+p+'"><span class="gw"><span class="gsc gsc-'+p+'" aria-hidden="true">'+gorScene(p,P.cls)+'</span><i class="gsh"></i></span><span class="pn">'+P.ad+'</span><small>'+(P.h?ic('lock')+'Şifreli':'Sadece bu cihaz')+'</small></button>';}).join('');}
+function profPick(){const d=document.createElement('div');d.className='prof';d.innerHTML='<div class="prof-glow" aria-hidden="true"></div><p class="prof-brand">Kalistenik <span>3 gün</span></p><h1><span>Kim</span> <span>antrenman</span> <span>yapıyor?</span></h1><div class="pp">'+profCards()+'</div><p class="pfoot">Seviyeler ve kayıtlar herkesinkine ayrı tutulur.</p>';
+  d.addEventListener('click',ev=>{const b=ev.target.closest('[data-prof]');if(!b)return;const p=b.dataset.prof;if(!PROFS[p].h){try{localStorage.setItem('kal-profil',p);}catch(e){}location.reload();return;}d.querySelector('.pp').outerHTML='<form class="pw"><span class="pw-av pw-'+p+'" aria-hidden="true"><span>'+gorScene(p,PROFS[p].cls)+'</span></span><p class="pw-t">'+PROFS[p].ad+'</p><p class="pw-s">Şifreni gir</p><input type="password" inputmode="none" readonly autocomplete="off" id="pwi" class="pw-in" aria-label="Şifre"><div class="pw-dots" aria-hidden="true"></div><p id="pwm" class="pw-m" role="alert"></p>'+pinPad()+'<button type="submit" class="pw-go" hidden>Gir</button><a href="#" id="pwb" class="pw-b">'+ic('back')+'Geri</a></form>';
     const f=d.querySelector('.pw');f.style.cssText='display:flex;flex-direction:column;align-items:center;gap:12px';const i=d.querySelector('#pwi');setTimeout(()=>i.focus(),50);
     d.querySelector('#pwb').onclick=e=>{e.preventDefault();d.remove();profPick();};
     f.onsubmit=async e=>{e.preventDefault();if(await sha('kal:'+i.value.trim())===PROFS[p].h){try{localStorage.setItem('kal-profil',p);}catch(e){}location.reload();}else{d.querySelector('#pwm').textContent='Şifre yanlış';i.value='';i.focus();}};});document.body.appendChild(d);}
 const KEY=PROF&&PROF!=='zeynel'?'kal-state-v4-'+PROF:'kal-state-v4';
-(function(){const h=document.getElementById('hello');if(!h)return;if(!PROF){profPick();return;}const P=PROFS[PROF];h.innerHTML='<span class="av" aria-hidden="true"><span class="g '+P.cls+'">'+gorSvg('pg')+'</span></span><span class="hi"><b>Selam '+P.ad+'</b><small id="cloudst"></small></span><button class="linkbtn swb" id="profsw">'+ic('swap')+'<span>Kişi değiştir</span></button>';
+(function(){const h=document.getElementById('hello');if(!h)return;if(!PROF){profPick();return;}const P=PROFS[PROF];h.innerHTML='<span class="av av-'+PROF+'" aria-hidden="true"><span class="g '+P.cls+'">'+gorScene(PROF,'pg')+'</span></span><span class="hi"><b>Selam '+P.ad+'</b><small id="cloudst"></small></span><button class="linkbtn swb" id="profsw">'+ic('swap')+'<span>Kişi değiştir</span></button>';
   document.getElementById('profsw').addEventListener('click',()=>{try{localStorage.removeItem('kal-profil');}catch(e){}location.reload();});})();
 try{if(PROF==='zeynel'&&!localStorage.getItem(KEY)){const o=JSON.parse(localStorage.getItem('kal-state-v3')||localStorage.getItem('kal-state-v2')||'null');if(o&&o.log)localStorage.setItem(KEY,JSON.stringify({log:o.log}));}}catch(e){}
 let state={levels:{},log:[],alt:{},fb:{},hist:{},chg:{},tests:[]}, store=null, saveT=null, saving=false, again=false, statusMsg='';
@@ -4375,7 +4397,7 @@ function setStatus(m){statusMsg=m;const el=document.getElementById('status'); if
   if(!window.claude||!claude.use) return;
   const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]); if(!db||!user) return;
   const id=await user.id(); if(!id) return;
-  store=db.doc('data/users/'+id+'/state4'+(PROF==='bayram'?'-bayram':''));
+  store=db.doc('data/users/'+id+'/state4'+(PROF&&PROF!=='zeynel'?'-'+PROF:''));
   let got=false; const tm=setTimeout(()=>{if(!got) setStatus('Kayıtlar henüz yüklenmedi; bu cihazdaki kopya gösteriliyor.');},10000);
   store.onSnapshot(snap=>{got=true;clearTimeout(tm);setStatus('');
     if(snap.exists){const d=snap.data()||{};state={levels:Object.assign({},d.levels||{}),alt:Object.assign({},d.alt||{}),log:(d.log||[]).slice(),fb:Object.assign({},d.fb||{}),hist:Object.assign({},d.hist||{}),chg:Object.assign({},d.chg||{}),tests:(d.tests||[]).slice(),draftNotes:state.draftNotes};fixState();
@@ -4830,7 +4852,7 @@ window.fxFin=function(){buzz([40,60,40,60,120]);confetti();cele('fin','Antrenman
 })();
 
 /* sinirli, gerçekçi goril büstü (orijinal çizim): gümüş sırt, kas hatları, koyu deri yüz, çatık kaş çıkıntısı, kükreyen ağız. Her çağrıda benzersiz gradyan kimlikleri. */
-function gorSvg(cls){const u='gr'+(gorSvg.n=(gorSvg.n||0)+1);let r=11;const rnd=()=>(r=(r*9301+49297)%233280)/233280;
+function gorSvg(cls,o){const u='gr'+(gorSvg.n=(gorSvg.n||0)+1);let r=11;const rnd=()=>(r=(r*9301+49297)%233280)/233280;
   const fur=(cx,cy,rx,ry,n,ang,len,col,op,w)=>{let o='';for(let i=0;i<n;i++){const a=rnd()*6.283,d=Math.sqrt(rnd()),x=cx+Math.cos(a)*rx*d,y=cy+Math.sin(a)*ry*d,t=ang+(rnd()-.5)*.7,l=len*(.55+rnd()*.7);
       o+=`M${x.toFixed(1)} ${y.toFixed(1)}l${(Math.cos(t)*l).toFixed(1)} ${(Math.sin(t)*l).toFixed(1)}`;}
     return `<path d="${o}" stroke="${col}" stroke-opacity="${op}" stroke-width="${w||.9}" stroke-linecap="round" fill="none"/>`;};
@@ -4854,6 +4876,12 @@ function gorSvg(cls){const u='gr'+(gorSvg.n=(gorSvg.n||0)+1);let r=11;const rnd=
 <path fill="url(#${u}s)" d="M22 150c8-32 40-50 78-50s70 18 78 50c-18-20-46-32-78-32s-60 12-78 32z"/>
 ${fur(48,128,30,22,70,D+.9,7,'#dfe3e8',.32)}${fur(152,128,30,22,70,D-.9,7,'#dfe3e8',.32)}${fur(100,108,46,7,40,D,6,'#e8ebef',.35)}
 ${fur(34,176,22,26,50,D+.4,7,'#000',.4)}${fur(166,176,22,26,50,D-.4,7,'#000',.4)}
+<path fill="url(#${u}f)" d="M70 104c-14 6-30 10-40 22 14-4 30-6 42-4zM130 104c14 6 30 10 40 22-14-4-30-6-42-4z"/>
+<g class="delt"><ellipse cx="38" cy="136" rx="27" ry="31" fill="url(#${u}f)" transform="rotate(-18 38 136)"/><ellipse cx="162" cy="136" rx="27" ry="31" fill="url(#${u}f)" transform="rotate(18 162 136)"/>
+<path d="M20 126c6-14 20-22 34-20M180 126c-6-14-20-22-34-20" stroke="#cfd5dc" stroke-opacity=".35" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<path d="M30 160c-6-10-8-22-4-32M170 160c6-10 8-22 4-32M52 112c6 14 6 30 2 46M148 112c-6 14-6 30-2 46" stroke="#000" stroke-opacity=".45" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+${fur(38,136,22,26,46,D+.6,6,'#aab1ba',.26)}${fur(162,136,22,26,46,D-.6,6,'#aab1ba',.26)}</g>
+<path d="M88 174h24M86 186h28M100 170v30M90 196h20" stroke="#000" stroke-opacity=".35" stroke-width="1.4" fill="none" stroke-linecap="round"/>
 <path fill="url(#${u}c)" d="M60 136c6-18 34-20 40-7 6-13 34-11 40 7 5 20-8 33-28 31-6 0-10-2-12-5-2 3-6 5-12 5-20 2-33-11-28-31z"/>
 <path d="M100 130v34M64 140c10-9 26-9 34-2M136 140c-10-9-26-9-34-2M68 156c9 7 21 9 30 5M132 156c-9 7-21 9-30 5" stroke="#000" stroke-opacity=".42" stroke-width="1.5" fill="none" stroke-linecap="round"/>
 <path d="M68 136c8-7 20-8 28-3M132 136c-8-7-20-8-28-3" stroke="#fff" stroke-opacity=".12" stroke-width="1.4" fill="none" stroke-linecap="round"/>
@@ -4879,8 +4907,100 @@ ${fur(100,52,34,32,110,D,6,'#aab1ba',.28)}${fur(70,84,8,22,30,D+.5,6,'#000',.45)
 <path fill="url(#${u}t)" d="M82 104l4 14 5-13zM118 104l-4 14-5-13zM92 104h16l-.8 5h-14.4z"/>
 <path d="M96 104.5v4M100 104.5v4.3M104 104.5v4" stroke="#8c7d5c" stroke-width=".7"/>
 <path d="M77 104c7-6 39-6 46 0" stroke="#12100f" stroke-width="2.8" fill="none" stroke-linecap="round"/></g>
-<g class="armL">${arm}</g><g class="armR"><g transform="matrix(-1 0 0 1 200 0)">${arm}</g></g>
+${o&&o.noArms?'':`<g class="armL">${arm}</g><g class="armR"><g transform="matrix(-1 0 0 1 200 0)">${arm}</g></g>`}
 </svg>`;}
+/* ===== profil sahneleri: barfiks (Zeynel), motor (Bayram), roket (Tufan) ===== */
+function gorScene(prof,cls){
+  const RM=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();
+  const u='gs'+(gorScene.n=(gorScene.n||0)+1);
+  const A=(s)=>RM?'':s; // SMIL animasyonu (azaltılmış harekette yok)
+  const bust=(x,y,w,arms)=>gorSvg('',arms===false?{noArms:1}:{}).replace('<svg ',`<svg x="${x}" y="${y}" width="${w}" height="${w}" `);
+  /* kürklü uzuv: kalın koyu çizgi + açık kenar + kıl dokusu */
+  let rs=7;const rnd=()=>(rs=(rs*9301+49297)%233280)/233280;
+  const hair=(d,n,len)=>{const pts=[];const m=d.match(/-?\d+(\.\d+)?/g).map(Number);for(let i=0;i+1<m.length;i+=2)pts.push([m[i],m[i+1]]);
+    let o='';for(let k=0;k<n;k++){const j=Math.min(pts.length-2,Math.floor(rnd()*(pts.length-1))),t=rnd(),a=pts[j],b=pts[j+1],x=a[0]+(b[0]-a[0])*t+(rnd()-.5)*10,y=a[1]+(b[1]-a[1])*t+(rnd()-.5)*10,an=Math.atan2(b[1]-a[1],b[0]-a[0])+Math.PI/2+(rnd()-.5);
+      o+=`M${x.toFixed(1)} ${y.toFixed(1)}l${(Math.cos(an)*len*(.5+rnd())).toFixed(1)} ${(Math.sin(an)*len*(.5+rnd())).toFixed(1)}`;}
+    return `<path d="${o}" stroke="#aab1ba" stroke-opacity=".28" stroke-width=".9" stroke-linecap="round" fill="none"/>`;};
+  /* kaslı uzuv: taban + pathLength ile biseps/önkol (bacakta quad/baldır) şişkinlikleri + kas çizgisi */
+  const limb=(d,w,anim,leg)=>{const P=(sw,col,da,ex)=>`<path d="${d}" pathLength="100" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" fill="none"${da?` stroke-dasharray="${da}"`:''}${ex||''}>${anim||''}</path>`;
+    const b1=leg?'0 6 40 100':'0 8 34 100',b2=leg?'0 56 28 100':'0 56 26 100';
+    return P(w,'#202328')+P((w*1.42).toFixed(1),'#24282e',b1)+P((w*1.28).toFixed(1),'#24282e',b2)
+      +P((w*.34).toFixed(1),'#5b626b',leg?'0 10 30 100':'0 12 24 100',` stroke-opacity=".3" transform="translate(-${(w*.3).toFixed(1)} -${(w*.25).toFixed(1)})"`)
+      +P((w*.28).toFixed(1),'#5b626b',b2,` stroke-opacity=".22" transform="translate(-${(w*.26).toFixed(1)} -${(w*.2).toFixed(1)})"`)
+      +P(1.2,'#000','0 14 22 100',` stroke-opacity=".5"`);};
+  const fist=(x,y,r,rot)=>`<g transform="translate(${x} ${y}) rotate(${rot||0})"><ellipse rx="${r}" ry="${r*.8}" fill="url(#${u}k)"/><path d="M${-r*.6} ${-r*.35}q${r*.2} ${-r*.25} ${r*.4} 0M${-r*.15} ${-r*.45}q${r*.2} ${-r*.25} ${r*.4} 0M${r*.3} ${-r*.35}q${r*.18} ${-r*.2} ${r*.35} .05" stroke="#0c0a09" stroke-opacity=".7" stroke-width="1.2" fill="none" stroke-linecap="round"/></g>`;
+  const defs=`<defs><radialGradient id="${u}k" cx="45%" cy="30%" r="75%"><stop offset="0" stop-color="#55504c"/><stop offset=".6" stop-color="#2f2a28"/><stop offset="1" stop-color="#171413"/></radialGradient>
+<radialGradient id="${u}f" cx="50%" cy="25%" r="85%"><stop offset="0" stop-color="#4d535c"/><stop offset=".55" stop-color="#2a2e34"/><stop offset="1" stop-color="#111316"/></radialGradient>
+<linearGradient id="${u}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2f6"/><stop offset=".5" stop-color="#9aa3ad"/><stop offset="1" stop-color="#5d656f"/></linearGradient>
+<linearGradient id="${u}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a5c"/><stop offset=".45" stop-color="#e8452b"/><stop offset="1" stop-color="#8f1f12"/></linearGradient>
+<linearGradient id="${u}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#dfe4ea"/><stop offset="1" stop-color="#8e97a2"/></linearGradient>
+<radialGradient id="${u}fl" cx="50%" cy="10%" r="90%"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffd34d"/><stop offset=".7" stop-color="#ff7a1f"/><stop offset="1" stop-color="#ff3d00" stop-opacity="0"/></radialGradient>
+<radialGradient id="${u}t" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#3a3f46"/><stop offset=".75" stop-color="#15171a"/><stop offset="1" stop-color="#0b0c0e"/></radialGradient></defs>`;
+  const wrap=(vb,inner,lbl)=>`<svg class="gscene ${cls||''}" viewBox="${vb}" aria-hidden="true" focusable="false">${defs}${inner}</svg>`;
+
+  if(prof==='zeynel'){
+    /* barfiks: tepe noktası ↔ asılı, kollar bükülüp açılıyor */
+    const D='2.6s',kt='0;.42;.58;1',ks='.45 0 .55 1;.45 0 .55 1;.45 0 .55 1';
+    const arm=(s)=>{ // s=1 sol, -1 sağ (sahne x ekseninde ayna)
+      const hx=120-s*54, sx0=120-s*40;
+      const top=`M${sx0} 108 Q${120-s*78} 104 ${hx} 66`, hang=`M${sx0} 150 Q${120-s*62} 110 ${hx} 66`;
+      const an=`<animate attributeName="d" dur="${D}" repeatCount="indefinite" calcMode="spline" keyTimes="${kt}" keySplines="${ks}" values="${hang};${top};${top};${hang}"/>`;
+      return limb(hang,26,A(an))+fist(hx,62,12,s*8);};
+    const body=`<g>${A(`<animateTransform attributeName="transform" type="translate" dur="${D}" repeatCount="indefinite" calcMode="spline" keyTimes="${kt}" keySplines="${ks}" values="0 42;0 0;0 0;0 42"/>`)}
+      ${limb('M104 180 Q92 212 112 236',24,'',1)}${limb('M136 180 Q150 210 128 234',24,'',1)}
+      <path d="M112 236 q-14 6 -6 12 q10 3 18 -6z M128 234 q14 6 6 12 q-10 3 -18 -6z" fill="url(#${u}k)"/>
+      <ellipse cx="120" cy="166" rx="34" ry="26" fill="url(#${u}f)"/>${hair('M90 160 L120 188 L150 160',40,5)}
+      ${bust(64,38,112,false)}</g>`;
+    return wrap('0 0 240 262',`<g class="gs-bar"><rect x="22" y="58" width="196" height="9" rx="4.5" fill="url(#${u}m)"/><rect x="16" y="52" width="10" height="21" rx="3" fill="#6b737d"/><rect x="214" y="52" width="10" height="21" rx="3" fill="#6b737d"/></g>
+      ${arm(1)}${arm(-1)}${body}
+      <g class="gs-fx" opacity=".55">${A(`<animate attributeName="opacity" dur="${D}" repeatCount="indefinite" keyTimes="0;.4;.5;.62;1" values="0;0;.9;0;0"/>`)}<path d="M40 40l-10-8M200 40l10-8M48 26l-4-12M192 26l4-12" stroke="#ffb35c" stroke-width="3" stroke-linecap="round"/></g>`);
+  }
+  if(prof==='bayram'){
+    /* motor: tekerler döner, motor hafif zıplar, egzoz dumanı, hız çizgileri */
+    const wheel=(cx)=>`<g transform="translate(${cx} 176)"><circle r="31" fill="url(#${u}t)"/><circle r="31" fill="none" stroke="#000" stroke-width="2"/><circle r="20" fill="none" stroke="#7b838d" stroke-width="2.4"/>
+      <g>${A(`<animateTransform attributeName="transform" type="rotate" from="0" to="360" dur=".55s" repeatCount="indefinite"/>`)}<path d="M0-20V20M-20 0H20M-14-14L14 14M-14 14L14-14" stroke="#aeb5be" stroke-width="1.6"/></g><circle r="5" fill="#c9ced4"/></g>`;
+    const bike=`<g class="gs-bike">${A(`<animateTransform attributeName="transform" type="translate" dur=".42s" repeatCount="indefinite" values="0 0;0 -1.6;0 0"/>`)}
+      ${wheel(62)}${wheel(214)}
+      <path d="M62 176 L106 128 L170 128 L214 176" stroke="#2b2f35" stroke-width="8" fill="none" stroke-linejoin="round"/>
+      <path d="M96 140 L150 140 L136 170 L104 170z" fill="#3a3f46"/><rect x="104" y="146" width="30" height="18" rx="4" fill="#59606a"/><path d="M108 150h22M108 155h22M108 160h22" stroke="#2b2f35" stroke-width="1.5"/>
+      <path d="M150 116 q20-14 42 0 l-4 18 h-34z" fill="url(#${u}r)"/><path d="M156 112 q16-9 30 0" stroke="#ffd0bd" stroke-opacity=".7" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M70 118 q34 -12 84 -2 l-2 12 q-40 -6 -80 4z" fill="#15171a"/>
+      <path d="M188 120 L214 176" stroke="#9aa3ad" stroke-width="6" stroke-linecap="round"/><path d="M196 96 L188 122" stroke="#9aa3ad" stroke-width="5" stroke-linecap="round"/>
+      <path d="M180 92 L206 96" stroke="#2b2f35" stroke-width="6" stroke-linecap="round"/><circle cx="214" cy="112" r="7" fill="#ffe6a3" stroke="#9aa3ad" stroke-width="2"/>
+      <path d="M58 150 q-10 0 -20 4" stroke="#8e2a1a" stroke-width="0" fill="none"/>
+      <path d="M86 160 L40 166" stroke="#9aa3ad" stroke-width="7" stroke-linecap="round"/>
+      <path d="M44 120 q18 -6 30 4 l-10 8z" fill="#e8452b"/>
+      <g class="gs-puff">${A(`<animateTransform attributeName="transform" type="translate" dur="1.1s" repeatCount="indefinite" values="0 0;-26 -8"/><animate attributeName="opacity" dur="1.1s" repeatCount="indefinite" values=".8;0"/>`)}<circle cx="30" cy="164" r="8" fill="#c9ced4"/><circle cx="20" cy="160" r="5" fill="#c9ced4"/></g>
+      <g>${limb('M128 120 Q150 150 146 166',26,'',1)}<path d="M136 164 h22 q4 6 -2 9 h-22z" fill="url(#${u}k)"/></g>
+      ${limb('M100 92 Q140 78 184 92',18)}${fist(184,93,8,0)}
+      <g>${bust(66,12,124,false)}</g>
+      ${limb('M150 92 Q176 100 196 95',20)}${fist(198,95,9,0)}
+    </g>`;
+    const lines=`<g stroke="#ffffff" stroke-opacity=".5" stroke-linecap="round" stroke-width="3">${A(`<animateTransform attributeName="transform" type="translate" dur=".6s" repeatCount="indefinite" values="0 0;-18 0"/><animate attributeName="opacity" dur=".6s" repeatCount="indefinite" values="0;1;0"/>`)}<path d="M8 120h26M2 140h20M14 100h18"/></g>`;
+    return wrap('0 0 260 212',`<ellipse cx="138" cy="208" rx="108" ry="5" fill="#000" opacity=".35"/>${lines}${bike}`);
+  }
+  if(prof==='tufan'){
+    /* roket: çapraz yükselen roket, alev titrer, hız çizgileri, yıldızlar */
+    const flame=`<g transform="translate(46 196) rotate(-36)"><path d="M0 -16 Q-46 0 0 16 Q-8 0 0 -16z" fill="url(#${u}fl)">${A(`<animate attributeName="d" dur=".18s" repeatCount="indefinite" values="M0 -16 Q-46 0 0 16 Q-8 0 0 -16z;M0 -16 Q-62 0 0 16 Q-10 0 0 -16z;M0 -16 Q-46 0 0 16 Q-8 0 0 -16z"/>`)}</path>
+      <path d="M0 -9 Q-26 0 0 9 Q-4 0 0 -9z" fill="#fff6c8">${A(`<animate attributeName="d" dur=".14s" repeatCount="indefinite" values="M0 -9 Q-26 0 0 9 Q-4 0 0 -9z;M0 -9 Q-34 0 0 9 Q-4 0 0 -9z;M0 -9 Q-26 0 0 9 Q-4 0 0 -9z"/>`)}</path></g>`;
+    const rocket=`<g transform="translate(50 194) rotate(-36)">
+      <path d="M6 -22 L-12 -40 L-6 -22z M6 22 L-12 40 L-6 22z" fill="url(#${u}r)"/>
+      <path d="M0 -22 H150 Q196 -18 214 0 Q196 18 150 22 H0 Q-6 0 0 -22z" fill="url(#${u}w)"/>
+      <path d="M170 -19 Q200 -14 214 0 Q200 14 170 19 Q180 0 170 -19z" fill="url(#${u}r)"/>
+      <path d="M0 -22 H150" stroke="#ffffff" stroke-width="3" stroke-opacity=".8"/><path d="M4 12 H150" stroke="#5d656f" stroke-opacity=".35" stroke-width="5"/>
+      <rect x="22" y="-22" width="12" height="44" fill="url(#${u}r)"/><rect x="128" y="-22" width="8" height="44" fill="#c4cbd3"/>
+      <circle cx="150" cy="0" r="10" fill="#22323f" stroke="#c4cbd3" stroke-width="3"/><circle cx="147" cy="-3" r="3" fill="#bfe6ff" opacity=".8"/>
+      <path d="M60 22 L40 44 L86 22z" fill="url(#${u}r)"/></g>`;
+    const rider=`<g>${A(`<animateTransform attributeName="transform" type="translate" dur=".5s" repeatCount="indefinite" values="0 0;.8 -1.2;0 0"/>`)}
+      ${limb('M118 138 Q100 170 120 178',24,'',1)}<path d="M112 176 q-4 10 10 10 q10 -2 8 -10z" fill="url(#${u}k)"/>
+      ${bust(54,6,128)}</g>`;
+    const streaks=`<g stroke="#ffd27a" stroke-linecap="round" stroke-width="2.4">${A(`<animateTransform attributeName="transform" type="translate" dur=".5s" repeatCount="indefinite" values="0 0;-14 10"/><animate attributeName="opacity" dur=".5s" repeatCount="indefinite" values="0;.9;0"/>`)}<path d="M22 150l-14 10M40 124l-18 13M14 186l-10 7"/></g>`;
+    const stars=`<g fill="#fff">${A(`<animate attributeName="opacity" dur="1.6s" repeatCount="indefinite" values=".3;1;.3"/>`)}<circle cx="214" cy="40" r="2"/><circle cx="232" cy="96" r="1.5"/><circle cx="24" cy="44" r="1.6"/><path d="M190 18l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></g>`;
+    return wrap('0 0 250 240',`${stars}${streaks}${flame}${rocket}${rider}`);
+  }
+  return gorSvg(cls||'');
+}
+
 
 /* ===== TASARIM v2: yardımcılar (fonksiyon bildirimleri, betik başında hazır) ===== */
 function ic(n,c){return `<svg class="ic${c?' '+c:''}" aria-hidden="true" focusable="false"><use href="#i-${n}"/></svg>`;}
