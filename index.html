@@ -712,6 +712,17 @@ header.top{padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px}
 /* çizim etiketi çizimin üstünde ayrı şeritte: SVG içindeki yazılarla çakışmaz */
 .stage .tag{position:relative;top:auto;left:auto;display:inline-flex;margin:10px 0 0 10px;z-index:1}
 .stage .anim{margin-top:2px}
+
+/* 6 profil: 2 sütun × 3 satır */
+.prof{overflow-y:auto;justify-content:safe center}
+.prof .pp{gap:10px}
+.prof .pp>button,.prof .pp button[data-prof=misafir]{min-height:150px;padding:8px 6px 10px;border-radius:20px}
+.prof .pp>button:nth-child(5){animation-delay:.6s}.prof .pp>button:nth-child(6){animation-delay:.68s}
+.gsc-zeynel{width:88px}.gsc-bayram{width:122px}.gsc-tufan{width:112px}.gsc-burak,.gsc-feryat{width:100px}.gsc-misafir{width:46px}
+.pw-av.pw-burak span,.pw-av.pw-feryat span{width:88%}
+.prof .gsc-burak~.gsh,.prof .gsc-feryat~.gsh{opacity:.3}
+.hello .av-burak,.hello .av-feryat{align-items:center;width:44px;height:44px}.hello .av-burak .g,.hello .av-feryat .g{width:40px}
+@media (max-height:760px){.prof h1{font-size:32px}.prof .pp>button,.prof .pp button[data-prof=misafir]{min-height:132px}}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -4378,12 +4389,12 @@ applyArt();applySns();
 applyCues();
 
 /* kayıt */
-const PROFS={zeynel:{ad:'Zeynel',cls:'',h:'3d8295dca3c20ede915b542f6002d7b063319e889e0e1bd10066ad6469ba0eb3'},bayram:{ad:'Bayram',cls:'s',h:'c78ff0eb8c8dd03b0baf595219c496635ec51480a756b7ddd81481113fca1d8d'},tufan:{ad:'Tufan',cls:'',h:'97626fa59f6cfdb43a4613a57a541f1a3f88836299a93c48cde7d6d2e8930289'},misafir:{ad:'Misafir',cls:'xs'}};
+const PROFS={zeynel:{ad:'Zeynel',cls:'',n:6,h:'3d8295dca3c20ede915b542f6002d7b063319e889e0e1bd10066ad6469ba0eb3'},bayram:{ad:'Bayram',cls:'s',n:2,h:'c78ff0eb8c8dd03b0baf595219c496635ec51480a756b7ddd81481113fca1d8d'},tufan:{ad:'Tufan',cls:'',n:4,h:'97626fa59f6cfdb43a4613a57a541f1a3f88836299a93c48cde7d6d2e8930289'},burak:{ad:'Burak',cls:'',n:6,h:'40138f07de2e303ccf3691302b1a894fcfa04d291f2438d41e2c23e5fc083403'},feryat:{ad:'Feryat',cls:'',n:8,h:'b753c314700bad9d2f03ea0734247af14063e1b27d98c64fbb4f6edb458f75ab'},misafir:{ad:'Misafir',cls:'xs'}};
 async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 const PROF=(()=>{try{const p=localStorage.getItem('kal-profil');return PROFS[p]?p:null;}catch(e){return null;}})();
-function profCards(){return ['zeynel','bayram','tufan','misafir'].map(p=>{const P=PROFS[p];return '<button data-prof="'+p+'"><span class="gw"><span class="gsc gsc-'+p+'" aria-hidden="true">'+gorScene(p,P.cls)+'</span><i class="gsh"></i></span><span class="pn">'+P.ad+'</span><small>'+(P.h?ic('lock')+'Şifreli':'Sadece bu cihaz')+'</small></button>';}).join('');}
+function profCards(){return ['zeynel','bayram','tufan','burak','feryat','misafir'].map(p=>{const P=PROFS[p];return '<button data-prof="'+p+'"><span class="gw"><span class="gsc gsc-'+p+'" aria-hidden="true">'+gorScene(p,P.cls)+'</span><i class="gsh"></i></span><span class="pn">'+P.ad+'</span><small>'+(P.h?ic('lock')+'Şifreli':'Sadece bu cihaz')+'</small></button>';}).join('');}
 function profPick(){const d=document.createElement('div');d.className='prof';d.innerHTML='<div class="prof-glow" aria-hidden="true"></div><p class="prof-brand">Kalistenik <span>3 gün</span></p><h1><span>Kim</span> <span>antrenman</span> <span>yapıyor?</span></h1><div class="pp">'+profCards()+'</div><p class="pfoot">Seviyeler ve kayıtlar herkesinkine ayrı tutulur.</p>';
-  d.addEventListener('click',ev=>{const b=ev.target.closest('[data-prof]');if(!b)return;const p=b.dataset.prof;if(!PROFS[p].h){try{localStorage.setItem('kal-profil',p);}catch(e){}location.reload();return;}d.querySelector('.pp').outerHTML='<form class="pw"><span class="pw-av pw-'+p+'" aria-hidden="true"><span>'+gorScene(p,PROFS[p].cls)+'</span></span><p class="pw-t">'+PROFS[p].ad+'</p><p class="pw-s">Şifreni gir</p><input type="password" inputmode="none" readonly autocomplete="off" id="pwi" class="pw-in" aria-label="Şifre"><div class="pw-dots" aria-hidden="true"></div><p id="pwm" class="pw-m" role="alert"></p>'+pinPad()+'<button type="submit" class="pw-go" hidden>Gir</button><a href="#" id="pwb" class="pw-b">'+ic('back')+'Geri</a></form>';
+  d.addEventListener('click',ev=>{const b=ev.target.closest('[data-prof]');if(!b)return;const p=b.dataset.prof;if(!PROFS[p].h){try{localStorage.setItem('kal-profil',p);}catch(e){}location.reload();return;}d.querySelector('.pp').outerHTML='<form class="pw" data-n="'+(PROFS[p].n||4)+'"><span class="pw-av pw-'+p+'" aria-hidden="true"><span>'+gorScene(p,PROFS[p].cls)+'</span></span><p class="pw-t">'+PROFS[p].ad+'</p><p class="pw-s">Şifreni gir</p><input type="password" inputmode="none" readonly autocomplete="off" id="pwi" class="pw-in" aria-label="Şifre"><div class="pw-dots" aria-hidden="true"></div><p id="pwm" class="pw-m" role="alert"></p>'+pinPad()+'<button type="submit" class="pw-go" hidden>Gir</button><a href="#" id="pwb" class="pw-b">'+ic('back')+'Geri</a></form>';
     const f=d.querySelector('.pw');f.style.cssText='display:flex;flex-direction:column;align-items:center;gap:12px';const i=d.querySelector('#pwi');setTimeout(()=>i.focus(),50);
     d.querySelector('#pwb').onclick=e=>{e.preventDefault();d.remove();profPick();};
     f.onsubmit=async e=>{e.preventDefault();if(await sha('kal:'+i.value.trim())===PROFS[p].h){try{localStorage.setItem('kal-profil',p);}catch(e){}location.reload();}else{d.querySelector('#pwm').textContent='Şifre yanlış';i.value='';i.focus();}};});document.body.appendChild(d);}
@@ -4915,20 +4926,32 @@ function gorSvg(cls,o){const u='gr'+(gorSvg.n=(gorSvg.n||0)+1);let r=11;const rn
 <radialGradient id="${u}c" cx="50%" cy="25%" r="80%"><stop offset="0" stop-color="#5a5450"/><stop offset=".7" stop-color="#2c2725"/><stop offset="1" stop-color="#1a1615"/></radialGradient>
 <radialGradient id="${u}m" cx="50%" cy="15%" r="85%"><stop offset="0" stop-color="#8e2222"/><stop offset=".55" stop-color="#4a0b0c"/><stop offset="1" stop-color="#150304"/></radialGradient>
 <radialGradient id="${u}e" cx="40%" cy="40%" r="65%"><stop offset="0" stop-color="#f0b443"/><stop offset=".55" stop-color="#9a5512"/><stop offset="1" stop-color="#2a1205"/></radialGradient>
-<linearGradient id="${u}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6efdc"/><stop offset="1" stop-color="#c4b48c"/></linearGradient></defs>
-<path fill="url(#${u}f)" d="M10 206C6 150 28 110 68 99c14-4 50-4 64 0 40 11 62 51 58 107z"/>
+<linearGradient id="${u}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6efdc"/><stop offset="1" stop-color="#c4b48c"/></linearGradient>
+<radialGradient id="${u}hl" cx="35%" cy="28%" r="70%"><stop offset="0" stop-color="#c3cad2" stop-opacity=".85"/><stop offset=".45" stop-color="#7d858f" stop-opacity=".45"/><stop offset="1" stop-color="#2a2e34" stop-opacity="0"/></radialGradient>
+<radialGradient id="${u}hp" cx="40%" cy="25%" r="75%"><stop offset="0" stop-color="#b9a493" stop-opacity=".9"/><stop offset=".5" stop-color="#6f625a" stop-opacity=".45"/><stop offset="1" stop-color="#2c2725" stop-opacity="0"/></radialGradient></defs>
+<path fill="url(#${u}f)" d="M10 206C6 150 28 110 68 99c14-4 50-4 64 0 40 11 62 51 58 107${o&&o.round?'c-30 34-150 34-180 0':''}z"/>
 <path fill="url(#${u}s)" d="M22 150c8-32 40-50 78-50s70 18 78 50c-18-20-46-32-78-32s-60 12-78 32z"/>
 ${fur(48,128,30,22,70,D+.9,7,'#dfe3e8',.32)}${fur(152,128,30,22,70,D-.9,7,'#dfe3e8',.32)}${fur(100,108,46,7,40,D,6,'#e8ebef',.35)}
 ${fur(34,176,22,26,50,D+.4,7,'#000',.4)}${fur(166,176,22,26,50,D-.4,7,'#000',.4)}
 <path fill="url(#${u}f)" d="M70 104c-14 6-30 10-40 22 14-4 30-6 42-4zM130 104c14 6 30 10 40 22-14-4-30-6-42-4z"/>
+<path d="M30 150c-4 22 4 44 18 56h104c14-12 22-34 18-56-12 14-26 18-34 16-10 10-62 10-72 0-8 2-22-2-34-16z" fill="url(#${u}f)"/>
+<path d="M28 156c-2 18 4 36 14 48M172 156c2 18-4 36-14 48" stroke="#c9d0d8" stroke-opacity=".5" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+<path d="M10 206C6 150 28 110 68 99c14-4 50-4 64 0 40 11 62 51 58 107" stroke="#d5dbe2" stroke-opacity=".55" stroke-width="2.2" fill="none"/>
+<path d="M70 104c-14 6-30 10-40 22M130 104c14 6 30 10 40 22" stroke="#d5dbe2" stroke-opacity=".6" stroke-width="2.4" fill="none" stroke-linecap="round"/>
 <g class="delt"><ellipse cx="38" cy="136" rx="27" ry="31" fill="url(#${u}f)" transform="rotate(-18 38 136)"/><ellipse cx="162" cy="136" rx="27" ry="31" fill="url(#${u}f)" transform="rotate(18 162 136)"/>
 <path d="M20 126c6-14 20-22 34-20M180 126c-6-14-20-22-34-20" stroke="#cfd5dc" stroke-opacity=".35" stroke-width="2.2" fill="none" stroke-linecap="round"/>
 <path d="M30 160c-6-10-8-22-4-32M170 160c6-10 8-22 4-32M52 112c6 14 6 30 2 46M148 112c-6 14-6 30-2 46" stroke="#000" stroke-opacity=".45" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+<ellipse cx="34" cy="126" rx="20" ry="22" fill="url(#${u}hl)" transform="rotate(-18 34 126)"/><ellipse cx="166" cy="126" rx="20" ry="22" fill="url(#${u}hl)" transform="rotate(18 166 126)"/>
+<path d="M14 140c2-22 18-36 36-38M186 140c-2-22-18-36-36-38" stroke="#e3e8ee" stroke-opacity=".65" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+<path d="M26 166c8 6 22 6 30-2M174 166c-8 6-22 6-30-2" stroke="#000" stroke-opacity=".6" stroke-width="2.4" fill="none" stroke-linecap="round"/>
 ${fur(38,136,22,26,46,D+.6,6,'#aab1ba',.26)}${fur(162,136,22,26,46,D-.6,6,'#aab1ba',.26)}</g>
-<path d="M88 174h24M86 186h28M100 170v30M90 196h20" stroke="#000" stroke-opacity=".35" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+<g class="abs">${[[0,168],[0,180],[0,192]].map(([o,y],k)=>`<rect x="${88-k*.5}" y="${y}" width="11" height="10" rx="4" fill="#3d3734"/><rect x="${101}" y="${y}" width="11" height="10" rx="4" fill="#3d3734"/><path d="M${90-k*.5} ${y+2.5}q4-2 8 0M103 ${y+2.5}q4-2 8 0" stroke="#b9a493" stroke-opacity=".7" stroke-width="1.3" fill="none" stroke-linecap="round"/>`).join('')}
+<path d="M100 166v38" stroke="#000" stroke-opacity=".6" stroke-width="1.8"/></g>
 <path fill="url(#${u}c)" d="M60 136c6-18 34-20 40-7 6-13 34-11 40 7 5 20-8 33-28 31-6 0-10-2-12-5-2 3-6 5-12 5-20 2-33-11-28-31z"/>
 <path d="M100 130v34M64 140c10-9 26-9 34-2M136 140c-10-9-26-9-34-2M68 156c9 7 21 9 30 5M132 156c-9 7-21 9-30 5" stroke="#000" stroke-opacity=".42" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-<path d="M68 136c8-7 20-8 28-3M132 136c-8-7-20-8-28-3" stroke="#fff" stroke-opacity=".12" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+<ellipse cx="81" cy="142" rx="17" ry="11" fill="url(#${u}hp)"/><ellipse cx="119" cy="142" rx="17" ry="11" fill="url(#${u}hp)"/>
+<path d="M66 136c8-8 22-9 30-3M134 136c-8-8-22-9-30-3" stroke="#e2d2c2" stroke-opacity=".7" stroke-width="2" fill="none" stroke-linecap="round"/>
+<path d="M64 158c10 8 24 10 34 4M136 158c-10 8-24 10-34 4" stroke="#000" stroke-opacity=".7" stroke-width="2.4" fill="none" stroke-linecap="round"/>
 <g class="headg">
 <path fill="url(#${u}f)" d="M62 90C56 60 70 28 100 18c30 10 44 42 38 72-3 18-18 30-38 30S65 108 62 90z"/>
 ${fur(100,52,34,32,110,D,6,'#aab1ba',.28)}${fur(70,84,8,22,30,D+.5,6,'#000',.45)}${fur(130,84,8,22,30,D-.5,6,'#000',.45)}
@@ -4958,7 +4981,7 @@ function gorScene(prof,cls){
   const RM=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();
   const u='gs'+(gorScene.n=(gorScene.n||0)+1);
   const A=(s)=>RM?'':s; // SMIL animasyonu (azaltılmış harekette yok)
-  const bust=(x,y,w,arms)=>gorSvg('',arms===false?{noArms:1}:{}).replace('<svg ',`<svg x="${x}" y="${y}" width="${w}" height="${w}" `);
+  const bust=(x,y,w,arms)=>gorSvg('',arms===false?{noArms:1,round:1}:{round:1}).replace('<svg ',`<svg x="${x}" y="${y}" width="${w}" height="${w}" overflow="visible" `);
   /* kürklü uzuv: kalın koyu çizgi + açık kenar + kıl dokusu */
   let rs=7;const rnd=()=>(rs=(rs*9301+49297)%233280)/233280;
   const hair=(d,n,len)=>{const pts=[];const m=d.match(/-?\d+(\.\d+)?/g).map(Number);for(let i=0;i+1<m.length;i+=2)pts.push([m[i],m[i+1]]);
@@ -4969,9 +4992,11 @@ function gorScene(prof,cls){
   const limb=(d,w,anim,leg)=>{const P=(sw,col,da,ex)=>`<path d="${d}" pathLength="100" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" fill="none"${da?` stroke-dasharray="${da}"`:''}${ex||''}>${anim||''}</path>`;
     const b1=leg?'0 6 40 100':'0 8 34 100',b2=leg?'0 56 28 100':'0 56 26 100';
     return P(w,'#202328')+P((w*1.42).toFixed(1),'#24282e',b1)+P((w*1.28).toFixed(1),'#24282e',b2)
-      +P((w*.34).toFixed(1),'#5b626b',leg?'0 10 30 100':'0 12 24 100',` stroke-opacity=".3" transform="translate(-${(w*.3).toFixed(1)} -${(w*.25).toFixed(1)})"`)
-      +P((w*.28).toFixed(1),'#5b626b',b2,` stroke-opacity=".22" transform="translate(-${(w*.26).toFixed(1)} -${(w*.2).toFixed(1)})"`)
-      +P(1.2,'#000','0 14 22 100',` stroke-opacity=".5"`);};
+      +P((w*.42).toFixed(1),'#9aa2ac',leg?'0 10 30 100':'0 12 24 100',` stroke-opacity=".55" transform="translate(-${(w*.32).toFixed(1)} -${(w*.28).toFixed(1)})"`)
+      +P((w*.34).toFixed(1),'#9aa2ac',b2,` stroke-opacity=".42" transform="translate(-${(w*.28).toFixed(1)} -${(w*.22).toFixed(1)})"`)
+      +P((w*.12).toFixed(1),'#e3e8ee','0 4 88 100',` stroke-opacity=".55" transform="translate(-${(w*.55).toFixed(1)} -${(w*.45).toFixed(1)})"`)
+      +P(2,'#000','0 12 26 100',` stroke-opacity=".7" transform="translate(${(w*.18).toFixed(1)} ${(w*.15).toFixed(1)})"`)
+      +P((w*1.1).toFixed(1),'#000','0 52 1.5 100',` stroke-opacity=".35"`);};
   const fist=(x,y,r,rot)=>`<g transform="translate(${x} ${y}) rotate(${rot||0})"><ellipse rx="${r}" ry="${r*.8}" fill="url(#${u}k)"/><path d="M${-r*.6} ${-r*.35}q${r*.2} ${-r*.25} ${r*.4} 0M${-r*.15} ${-r*.45}q${r*.2} ${-r*.25} ${r*.4} 0M${r*.3} ${-r*.35}q${r*.18} ${-r*.2} ${r*.35} .05" stroke="#0c0a09" stroke-opacity=".7" stroke-width="1.2" fill="none" stroke-linecap="round"/></g>`;
   const defs=`<defs><radialGradient id="${u}k" cx="45%" cy="30%" r="75%"><stop offset="0" stop-color="#55504c"/><stop offset=".6" stop-color="#2f2a28"/><stop offset="1" stop-color="#171413"/></radialGradient>
 <radialGradient id="${u}f" cx="50%" cy="25%" r="85%"><stop offset="0" stop-color="#4d535c"/><stop offset=".55" stop-color="#2a2e34"/><stop offset="1" stop-color="#111316"/></radialGradient>
@@ -5042,6 +5067,36 @@ function gorScene(prof,cls){
     const stars=`<g fill="#fff">${A(`<animate attributeName="opacity" dur="1.6s" repeatCount="indefinite" values=".3;1;.3"/>`)}<circle cx="214" cy="40" r="2"/><circle cx="232" cy="96" r="1.5"/><circle cx="24" cy="44" r="1.6"/><path d="M190 18l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></g>`;
     return wrap('0 0 250 240',`${stars}${streaks}${flame}${rocket}${rider}`);
   }
+
+  const stand=(tx)=>`${limb('M104 162 Q94 196 100 232',24,'',1)}${limb('M136 162 Q148 196 142 232',24,'',1)}
+      <path d="M100 232 q-18 2 -14 10 h22z M142 232 q18 2 14 10 h-22z" fill="url(#${u}k)"/>
+      <ellipse cx="120" cy="150" rx="34" ry="24" fill="url(#${u}f)"/>${hair('M90 146 L120 170 L150 146',36,5)}`;
+  if(prof==='burak'){
+    /* tenis: forehand vuruş — raket kolu omuz etrafında döner, top gelir ve vurulup gider */
+    const D='2.4s',kt='0;.36;.5;.72;1';
+    const swing=`<g>${A(`<animateTransform attributeName="transform" type="rotate" dur="${D}" repeatCount="indefinite" calcMode="spline" keyTimes="${kt}" keySplines=".4 0 .6 1;.7 0 .3 1;.3 0 .4 1;.5 0 .5 1" values="38 156 96;38 156 96;-118 156 96;-118 156 96;38 156 96"/>`)}
+      ${limb('M156 96 Q184 112 200 132',22)}
+      <g transform="translate(200 132) rotate(42)"><rect x="-3" y="2" width="6" height="22" rx="3" fill="#2b2f35"/><rect x="-3.6" y="10" width="7.2" height="12" rx="2" fill="#e8452b"/>
+        <path d="M0 24 L0 30" stroke="#9aa3ad" stroke-width="4"/><ellipse cx="0" cy="50" rx="15" ry="21" fill="rgba(255,255,255,.08)" stroke="#e8452b" stroke-width="4"/>
+        <path d="M-10 36V64M-5 31V69M0 29V71M5 31V69M10 36V64M-14 42H14M-15 50H15M-14 58H14M-11 65H11" stroke="#f2f5f8" stroke-opacity=".7" stroke-width=".8"/></g>
+      ${fist(200,132,10,30)}</g>`;
+    const ball=`<g>${A(`<animateTransform attributeName="transform" type="translate" dur="${D}" repeatCount="indefinite" keyTimes="0;.46;.7;1" values="-150 40;0 0;-170 -120;-170 -120"/><animate attributeName="opacity" dur="${D}" repeatCount="indefinite" keyTimes="0;.06;.66;.72;1" values="0;1;1;0;0"/>`)}
+      <circle cx="214" cy="150" r="7.5" fill="#d9f24a"/><path d="M208 146 q6 4 12 0M208 154 q6 -4 12 0" stroke="#f7ffd6" stroke-width="1.2" fill="none"/></g>`;
+    return wrap('0 0 250 250',`<ellipse cx="122" cy="244" rx="70" ry="5" fill="#000" opacity=".35"/><path d="M6 240 H244" stroke="#4a8f5b" stroke-opacity=".5" stroke-width="3"/>
+      ${stand()}${limb('M84 96 Q62 124 80 146',22)}${fist(82,146,10,0)}${bust(60,20,120,false)}${swing}${ball}`);
+  }
+  if(prof==='feryat'){
+    /* çapa: iki el sapta, çapa kalkar ve toprağa iner; vuruşta toprak parçacıkları */
+    const D='1.8s',kt='0;.45;.62;.7;1';
+    const hoe=`<g>${A(`<animateTransform attributeName="transform" type="rotate" dur="${D}" repeatCount="indefinite" calcMode="spline" keyTimes="${kt}" keySplines=".4 0 .6 1;.8 0 .9 .6;.3 0 .7 1;.5 0 .5 1" values="0 120 98;-52 120 98;4 120 98;4 120 98;0 120 98"/>`)}
+      <path d="M118 128 L206 226" stroke="#8a5a2b" stroke-width="7" stroke-linecap="round"/><path d="M118 128 L206 226" stroke="#c48a4c" stroke-width="2" stroke-linecap="round" transform="translate(-1.5 -1)"/>
+      <path d="M198 214 L222 206 L232 234 L206 236z" fill="url(#${u}m)" stroke="#5d656f" stroke-width="1.5"/>
+      ${limb('M84 96 Q104 132 140 150',22)}${limb('M156 96 Q172 140 168 180',22)}${fist(140,151,10,48)}${fist(168,182,10,48)}</g>`;
+    const dirt=[[-14,-26],[-4,-34],[8,-30],[16,-22],[-20,-14],[22,-12]].map(([dx,dy],k)=>`<circle cx="212" cy="236" r="${3+(k%3)}" fill="${k%2?'#6b4423':'#8a5a2b'}" opacity="0">${A(`<animateTransform attributeName="transform" type="translate" dur="${D}" repeatCount="indefinite" keyTimes="0;.62;.9;1" values="0 0;0 0;${dx} ${dy};${dx} ${dy}"/><animate attributeName="opacity" dur="${D}" repeatCount="indefinite" keyTimes="0;.6;.64;.9;1" values="0;0;1;0;0"/>`)}</circle>`).join('');
+    return wrap('0 0 250 250',`<path d="M0 238 Q60 230 124 236 T250 234 V250 H0z" fill="#5a3a1e"/><path d="M190 236 q22 -12 44 0z" fill="#7a5130"/><path d="M0 238 Q60 230 124 236 T250 234" stroke="#3e2713" stroke-width="2" fill="none"/>
+      <path d="M30 232 l4 -14 l4 14M44 234 l3 -10 l3 10" stroke="#4a8f5b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      ${stand()}${bust(60,20,120,false)}${hoe}${dirt}`);
+  }
   return gorSvg(cls||'');
 }
 
@@ -5105,7 +5160,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-wchk]');if
   document.querySelectorAll('[data-wchk]').forEach(x=>{if(x.dataset.wchk!==k)return;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on);const r=x.closest('.st');if(r)r.classList.toggle('ok',on);});
   if(on&&!red())b.animate([{transform:'scale(.6)'},{transform:'scale(1.18)',offset:.6},{transform:'scale(1)'}],{duration:420,easing:EO});if(on)buzz(8);updW();});
 /* PIN pad */
-function pinDots(bad){const i=document.getElementById('pwi'),d=document.querySelector('.pw-dots');if(!i||!d)return;const n=bad?Math.max(4,bad):i.value.length,m=Math.max(4,n);
+function pinN(){const f=document.querySelector('.pw');return +(f&&f.dataset.n)||4;}
+function pinDots(bad){const i=document.getElementById('pwi'),d=document.querySelector('.pw-dots');if(!i||!d)return;const N=pinN(),n=bad?N:Math.min(i.value.length,N),m=N;
   d.innerHTML=Array.from({length:m},(_,k)=>`<i class="${k<n?'on':''}"></i>`).join('');}
 function shakePin(){const d=document.querySelector('.pw-dots');if(!d)return;pinDots(4);d.classList.add('bad');buzz([30,40,30]);
   if(!red())d.animate([{transform:'translateX(0)'},{transform:'translateX(-12px)'},{transform:'translateX(10px)'},{transform:'translateX(-7px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],{duration:420,easing:'ease-out'});
@@ -5115,7 +5171,7 @@ function pinInit(){const m=document.getElementById('pwm');if(!m||m.dataset.ob)re
 function pinKey(v){const i=document.getElementById('pwi');if(!i)return;
   if(v==='del')i.value=i.value.slice(0,-1);
   else if(v==='ok'){if(!i.value){shakePin();return;}const f=i.form;if(f.requestSubmit)f.requestSubmit();else f.querySelector('.pw-go').click();return;}
-  else if(i.value.length<12)i.value+=v;pinDots();
+  else if(i.value.length<pinN()){i.value+=v;if(i.value.length===pinN()){const f=i.form;setTimeout(()=>{if(i.value.length===pinN()){if(f.requestSubmit)f.requestSubmit();else f.querySelector('.pw-go').click();}},180);}}pinDots();
   const d=document.querySelector('.pw-dots i.on:last-of-type');if(d&&v!=='del'&&!red()){const ds=document.querySelectorAll('.pw-dots i.on');const l=ds[ds.length-1];if(l)l.animate([{transform:'scale(.4)'},{transform:'scale(1.25)'},{transform:'scale(1.1)'}],{duration:240,easing:EO});}}
 document.addEventListener('click',e=>{const k=e.target.closest('[data-k]');if(k){pinKey(k.dataset.k);buzz(6);return;}if(e.target.closest('[data-prof]'))setTimeout(pinInit,0);});
 document.addEventListener('keydown',e=>{if(!document.getElementById('pwi')||e.metaKey||e.ctrlKey)return;
