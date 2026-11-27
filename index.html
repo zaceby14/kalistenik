@@ -38,7 +38,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .hello .g{font-size:22px;line-height:1}.hello .g.s{font-size:14px}
 .prof{position:fixed;inset:0;z-index:9999;background:var(--bg,#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:16px}
 .prof h1{font-family:var(--display);text-transform:uppercase;font-size:26px;margin:0}
-.prof .pp{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:420px}
+.prof .pp{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:420px}.prof .pp button[data-prof=misafir]{grid-column:1/-1;min-height:96px;flex-direction:row;justify-content:center;gap:12px}.prof .gm{font-size:24px;line-height:1}.hello .g.xs{font-size:10px}
 .prof button{border:2px solid var(--line,#ddd);background:var(--surface,#fff);color:var(--ink,#111);border-radius:20px;padding:22px 8px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;font:700 20px inherit;cursor:pointer;min-height:190px}
 .prof button:active{border-color:var(--accent)}
 .prof .gz{font-size:96px;line-height:1}.prof .gb{font-size:46px;line-height:1}
@@ -298,7 +298,7 @@ function mix(a,b,t){const same=(A,B)=>A.length===B.length&&A.every((q,i)=>d2(q,B
   else if(ff){const G=a.feet[0];P=vadd(G,pol(vsub(a.P,G),vsub(b.P,G),t));S=vadd(P,pol(vsub(a.S,a.P),vsub(b.S,b.P),t));}
   else{P=lp(a.P,b.P,t);S=vadd(P,pol(vsub(a.S,a.P),vsub(b.S,b.P),t));}
   const limb=(A,B,fix,R0,R1,Rt)=>A.map((f,i)=>{const g=B[i]||f;const w=(fix||(f[1]<.09&&g[1]<.09))?lp(f,g,t):vadd(Rt,pol(vsub(f,R0),vsub(g,R1),t));return[w[0],w[1],...(t<.5?f:g).slice(2)];});
-  return{facing:a.facing,front:a.front,S,P,h:lerp(a.h,b.h,t),hd:lerp(a.hd??.17,b.hd??.17,t),sh:lerp(a.sh||0,b.sh||0,t),rb:lerp(a.rb||0,b.rb||0,t),sc:a.sc||b.sc,
+  return{facing:a.facing,front:a.front,S,P,h:lerp(a.h,b.h,t),hd:lerp(a.hd??.17,b.hd??.17,t),sh:lerp(a.sh||0,b.sh||0,t),rb:lerp(a.rb||0,b.rb||0,t),lb:lerp(a.lb||0,b.lb||0,t),sc:a.sc||b.sc,
     feet:limb(a.feet,b.feet,ff,a.P,b.P,P),hands:limb(a.hands,b.hands,hf,a.S,b.S,S)};}
 /* front:1 = önden görünüş: kollar omuz genişliğinden, bacaklar kalça genişliğinden çıkar (0. uzuv solda) */
 function joints(p){const J={S:p.S,P:p.P,legs:[],arms:[]},fr=p.front?1:0,r=(o,i,w)=>fr?[o[0]+(i?w:-w),o[1]]:o;
@@ -349,17 +349,20 @@ function svgFor(d,time){
     if(part&1) J.legs.forEach(([k,f,fr,st,o0])=>{if(fr===far){const t=foot(k,f,st);o+=seg2(o0,k,col,.12)+seg2(k,f,col,.09)+ln(f,t,col,.06)+dot(k,.022)+dot(f,.018);}});
     if(part&2) J.arms.forEach(([e,h,fr,o0])=>{if(fr===far) o+=seg2(o0,e,col,.085)+seg2(e,h,col,.07)+dot(e,.018)+dot(h,.015);});return o;};
   const torso=()=>{const T=J.T,dx=T[0]-J.P[0],dy=T[1]-J.P[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,ws=p.front?.17:.1,wp=p.front?.13:.075;
-    const fa=p.facing??1,sg=Math.abs(ny)>.3?(ny>0?1:-1):(nx*fa<0?1:-1),bx=nx*sg,by=ny*sg,rb=p.front?0:(p.rb||0);
+    const fa=p.facing??1,sg=Math.abs(ny)>.3?(ny>0?1:-1):(nx*fa<0?1:-1),bx=nx*sg,by=ny*sg,rb=p.front?0:(p.rb||0),lb=p.front?0:(p.lb||0);
     const at=(f,u)=>[T[0]-dx*f+bx*u,T[1]-dy*f+by*u];
-    /* omurga: göğüs kafesi (geniş) → bel (dar) → leğen; rb ile üst sırt eğrisi */
-    const side=k=>[[0,ws*.92],[.12,ws*1.12+(k>0?rb:rb*.5)],[.38,ws*1.02+(k>0?rb*.8:rb*.3)],[.62,wp*.82+rb*.3*k],[.86,wp*1.08],[1,wp*.95]].map(([f,w])=>at(f,k*w));
-    const A=side(1),B=side(-1).reverse(),pts=[...A,...B];
-    let d='M'+F(pts[0][0])+' '+F(Y(pts[0][1]));for(let i=1;i<pts.length;i++){const a=pts[i-1],c=pts[i],m=[(a[0]+c[0])/2,(a[1]+c[1])/2];d+=' Q'+F(a[0])+' '+F(Y(a[1]))+' '+F(m[0])+' '+F(Y(m[1]));}
-    d+=' L'+F(pts[pts.length-1][0])+' '+F(Y(pts[pts.length-1][1]))+' Z';
-    let o=`<path d="${d}" fill="var(--ink)" stroke="var(--ink)" stroke-width=".035" stroke-linejoin="round"/>`;
+    if(p.front){const side=k=>[[0,ws*.92],[.14,ws*1.1],[.4,ws],[.62,wp*.82],[.86,wp*1.08],[1,wp*.95]].map(([f,w])=>at(f,k*w));const pts=[...side(1),...side(-1).reverse()];
+      return `<polygon points="${pts.map(q=>F(q[0])+','+F(Y(q[1]))).join(' ')}" fill="var(--ink)" stroke="var(--ink)" stroke-width=".04" stroke-linejoin="round"/>`;}
+    /* iki parçalı omurga: üst sırt (göğüs kafesi) T→M, bel+leğen M→P; M = sırt-bel eklemi. rb üst sırtı yuvarlar, lb beli büker (+ yuvarlak, − çukur) */
+    const M=at(.56,lb*1.1+rb*.25);
+    const blob=(A,B,wa,wm,wb,bul)=>{const vx=B[0]-A[0],vy=B[1]-A[1],l=Math.hypot(vx,vy)||1,mx=-vy/l,my=vx/l,s=(mx*bx+my*by)>=0?1:-1,qx=mx*s,qy=my*s;
+      const P_=(f,w)=>[A[0]+vx*f+qx*w,A[1]+vy*f+qy*w];
+      const pts=[P_(0,wa),P_(.3,wm+bul),P_(.7,wm*.96+bul*.6),P_(1,wb),P_(1,-wb),P_(.7,-wm*.96+bul*.2),P_(.3,-wm+bul*.3),P_(0,-wa)];
+      let d='M'+F(pts[0][0])+' '+F(Y(pts[0][1]));for(let i=1;i<=pts.length;i++){const a=pts[i-1],c=pts[i%pts.length],m=[(a[0]+c[0])/2,(a[1]+c[1])/2];d+=' Q'+F(a[0])+' '+F(Y(a[1]))+' '+F(m[0])+' '+F(Y(m[1]));}
+      return `<path d="${d} Z" fill="var(--ink)" stroke="var(--ink)" stroke-width=".035" stroke-linejoin="round"/>`;};
+    let o=blob(J.P,M,wp*1.0,wp*1.02,wp*.84,lb*.5)+blob(M,T,wp*.84,ws*1.12,ws*.92,rb);
     const jd=(q,r)=>`<circle cx="${F(q[0])}" cy="${F(Y(q[1]))}" r="${r}" fill="${OL}" fill-opacity=".5"/>`;
-    o+=`<path d="M${F(at(.62,-wp*.5)[0])} ${F(Y(at(.62,-wp*.5)[1]))} L${F(at(.62,wp*.5)[0])} ${F(Y(at(.62,wp*.5)[1]))}" stroke="${OL}" stroke-opacity=".35" stroke-width=".012"/>`;
-    o+=jd(J.T,.024)+jd(J.P,.026);
+    o+=jd(M,.022)+jd(J.T,.024)+jd(J.P,.026);
     if(p.sc&&!p.front){const bl=at(.1,ws+rb+.04),b2=at(.42,ws+rb*.8+.03);o+=ln(bl,b2,'var(--accent)',.05);}
     return o;};
   s+=limb(true);
@@ -3385,23 +3388,27 @@ Object.values(DRAW).forEach(d=>{if(!d||!d.k)return;let hit=false;d.k.forEach(p=>
   if(/sırt kabarır|üst sırt yükselir|kürekleri aç|kürek açılır|kürekler açılır|protrak/i.test(c)){p.rb=.06;hit=true;}
   else if(/kürekleri sık|kürekleri birleştir|göğüs çöker|kürekler birleşir|retrak/i.test(c)){p.rb=-.045;hit=true;}});
   if(hit){d.k.forEach(p=>{p.sc=1;p.rb=p.rb||0;});d._b=null;}});
+/* harekete özel eklem ayarları: ART['KOD']={kare:{rb,lb,sh,sc}} — rb üst sırt (+ kabarık/kürek açık, − kürek sıkışık/göğüs açık), lb bel (+ yuvarlak/leğen arkaya devrik, − bel çukuru/arch), sh omuz (+ kulağa, − aşağı), sc kürek işareti */
+const ART={};
+function applyArt(){Object.entries(ART).forEach(([k,m])=>{const d=DRAW[k];if(!d||!d.k)return;Object.entries(m).forEach(([i,v])=>{const p=d.k[+i];if(p)Object.assign(p,v);});if(Object.values(m).some(v=>v.sc))d.k.forEach(p=>{p.sc=1;});d._b=null;});}
 Object.values(DRAW).forEach(d=>{if(!d||!d.k)return;d.k.forEach(p=>{if(p.sc||p.front)return;const c=p.cap||'';
   if(/hollow|kambur|sırtı yuvarla|çanak|bel yere bas|kürekler yerden/i.test(c))p.rb=.035;
   else if(/arch|kavis|göğüs öne|superman|kobra|cobra/i.test(c))p.rb=-.03;});});
+applyArt();
 
 /* kayıt */
-const PROFS={zeynel:{ad:'Zeynel',cls:'',h:'3d8295dca3c20ede915b542f6002d7b063319e889e0e1bd10066ad6469ba0eb3'},bayram:{ad:'Bayram',cls:'s',h:'c78ff0eb8c8dd03b0baf595219c496635ec51480a756b7ddd81481113fca1d8d'}};
+const PROFS={zeynel:{ad:'Zeynel',cls:'',h:'3d8295dca3c20ede915b542f6002d7b063319e889e0e1bd10066ad6469ba0eb3'},bayram:{ad:'Bayram',cls:'s',h:'c78ff0eb8c8dd03b0baf595219c496635ec51480a756b7ddd81481113fca1d8d'},misafir:{ad:'Misafir',cls:'xs'}};
 async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 const PROF=(()=>{try{const p=localStorage.getItem('kal-profil');return PROFS[p]?p:null;}catch(e){return null;}})();
-function profPick(){const d=document.createElement('div');d.className='prof';d.innerHTML='<h1>Kim antrenman yapıyor?</h1><div class="pp"><button data-prof="zeynel"><span class="gz" aria-hidden="true">🦍</span>Zeynel</button><button data-prof="bayram"><span class="gb" aria-hidden="true">🦍</span>Bayram</button></div><p style="color:var(--muted);font-size:14px;margin:0">Seviyeler ve kayıtlar herkesinkine ayrı tutulur.</p>';
-  d.addEventListener('click',ev=>{const b=ev.target.closest('[data-prof]');if(!b)return;const p=b.dataset.prof;d.querySelector('.pp').outerHTML='<form class="pw"><p style="margin:0;font-weight:700;font-size:20px">'+PROFS[p].ad+' · şifre</p><input type="password" inputmode="numeric" autocomplete="off" id="pwi" style="font:700 24px inherit;text-align:center;padding:12px;border-radius:14px;border:2px solid var(--line,#ddd);width:200px;background:var(--surface,#fff);color:var(--ink,#111)"><button type="submit" style="min-height:0;padding:12px 28px;flex-direction:row">Gir</button><p id="pwm" style="color:#c8463d;margin:0;min-height:20px;font-size:15px"></p><a href="#" id="pwb" style="color:var(--muted);font-size:14px">← geri</a></form>';
+function profPick(){const d=document.createElement('div');d.className='prof';d.innerHTML='<h1>Kim antrenman yapıyor?</h1><div class="pp"><button data-prof="zeynel"><span class="gz" aria-hidden="true">🦍</span>Zeynel</button><button data-prof="bayram"><span class="gb" aria-hidden="true">🦍</span>Bayram</button><button data-prof="misafir"><span class="gm" aria-hidden="true">🦍</span>Misafir</button></div><p style="color:var(--muted);font-size:14px;margin:0">Seviyeler ve kayıtlar herkesinkine ayrı tutulur.</p>';
+  d.addEventListener('click',ev=>{const b=ev.target.closest('[data-prof]');if(!b)return;const p=b.dataset.prof;if(!PROFS[p].h){try{localStorage.setItem('kal-profil',p);}catch(e){}location.reload();return;}d.querySelector('.pp').outerHTML='<form class="pw"><p style="margin:0;font-weight:700;font-size:20px">'+PROFS[p].ad+' · şifre</p><input type="password" inputmode="numeric" autocomplete="off" id="pwi" style="font:700 24px inherit;text-align:center;padding:12px;border-radius:14px;border:2px solid var(--line,#ddd);width:200px;background:var(--surface,#fff);color:var(--ink,#111)"><button type="submit" style="min-height:0;padding:12px 28px;flex-direction:row">Gir</button><p id="pwm" style="color:#c8463d;margin:0;min-height:20px;font-size:15px"></p><a href="#" id="pwb" style="color:var(--muted);font-size:14px">← geri</a></form>';
     const f=d.querySelector('.pw');f.style.cssText='display:flex;flex-direction:column;align-items:center;gap:12px';const i=d.querySelector('#pwi');setTimeout(()=>i.focus(),50);
     d.querySelector('#pwb').onclick=e=>{e.preventDefault();d.remove();profPick();};
     f.onsubmit=async e=>{e.preventDefault();if(await sha('kal:'+i.value.trim())===PROFS[p].h){try{localStorage.setItem('kal-profil',p);}catch(e){}location.reload();}else{d.querySelector('#pwm').textContent='Şifre yanlış';i.value='';i.focus();}};});document.body.appendChild(d);}
-const KEY=PROF==='bayram'?'kal-state-v4-bayram':'kal-state-v4';
+const KEY=PROF&&PROF!=='zeynel'?'kal-state-v4-'+PROF:'kal-state-v4';
 (function(){const h=document.getElementById('hello');if(!h)return;if(!PROF){profPick();return;}const P=PROFS[PROF];h.innerHTML='<span class="g '+P.cls+'" aria-hidden="true">🦍</span><span>Selam '+P.ad+'</span><small id="cloudst" style="font-weight:500;font-size:12px"></small><button class="linkbtn" id="profsw" style="margin-left:auto">Kişi değiştir</button>';
   document.getElementById('profsw').addEventListener('click',()=>{try{localStorage.removeItem('kal-profil');}catch(e){}location.reload();});})();
-try{if(PROF!=='bayram'&&!localStorage.getItem(KEY)){const o=JSON.parse(localStorage.getItem('kal-state-v3')||localStorage.getItem('kal-state-v2')||'null');if(o&&o.log)localStorage.setItem(KEY,JSON.stringify({log:o.log}));}}catch(e){}
+try{if(PROF==='zeynel'&&!localStorage.getItem(KEY)){const o=JSON.parse(localStorage.getItem('kal-state-v3')||localStorage.getItem('kal-state-v2')||'null');if(o&&o.log)localStorage.setItem(KEY,JSON.stringify({log:o.log}));}}catch(e){}
 let state={levels:{},log:[],alt:{},fb:{},hist:{},chg:{},tests:[]}, store=null, saveT=null, saving=false, again=false, statusMsg='';
 try{const r=localStorage.getItem(KEY); if(r) state=Object.assign(state,JSON.parse(r));}catch(e){}
 function fixState(){['fb','hist','chg','alt'].forEach(k=>{if(!state[k]||typeof state[k]!=='object')state[k]={};});if(!Array.isArray(state.tests))state.tests=[];}fixState();
@@ -3425,10 +3432,10 @@ DAYS.forEach(d=>d.slots.forEach(s=>{if(!s.alt)return;s.base=s.lad;delete s.lad;O
 const FB='https://firestore.googleapis.com/v1/projects/kalistenik-kayit/databases/(default)/documents/kalistenik/',FBK='AIzaSyClXgjeUd0p9_DcN41TMIRvKZlmCjKEwnI';
 let cloudT=null,cloudBusy=false,cloudAgain=false;
 function cloudMark(s){const e=document.getElementById('cloudst');if(e)e.textContent=s;}
-async function cloudPush(){if(!PROF)return;if(cloudBusy){cloudAgain=true;return;}cloudBusy=true;cloudMark('☁ kaydediliyor…');
+async function cloudPush(){if(!PROF||!PROFS[PROF].h)return;if(cloudBusy){cloudAgain=true;return;}cloudBusy=true;cloudMark('☁ kaydediliyor…');
   try{const r=await fetch(FB+PROF+'?key='+FBK,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{data:{stringValue:JSON.stringify(state)},ts:{integerValue:String(state._ts||0)}}})});cloudMark(r.ok?'☁ kaydedildi':'☁ kaydedilemedi');}
   catch(e){cloudMark('☁ çevrimdışı');}cloudBusy=false;if(cloudAgain){cloudAgain=false;cloudPush();}}
-async function cloudPull(){if(!PROF)return;try{const r=await fetch(FB+PROF+'?key='+FBK);if(r.status===404){if(state.log.length||Object.keys(state.levels).length)cloudPush();else cloudMark('☁');return;}if(!r.ok){cloudMark('☁ bağlanamadı');return;}
+async function cloudPull(){if(!PROF||!PROFS[PROF].h){cloudMark(PROF?'· sadece bu cihazda':'');return;}try{const r=await fetch(FB+PROF+'?key='+FBK);if(r.status===404){if(state.log.length||Object.keys(state.levels).length)cloudPush();else cloudMark('☁');return;}if(!r.ok){cloudMark('☁ bağlanamadı');return;}
   const j=await r.json();const ts=+((j.fields&&j.fields.ts&&j.fields.ts.integerValue)||0);
   if(ts>(state._ts||0)){const d=JSON.parse(j.fields.data.stringValue);const dn=state.draftNotes;state=Object.assign({levels:{},log:[],alt:{},fb:{},hist:{},chg:{},tests:[]},d);if(dn)state.draftNotes=dn;fixState();try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}if(!open&&!(typeof run!=='undefined'&&run))render(false);cloudMark('☁ güncel');}
   else if(ts<(state._ts||0))cloudPush();else cloudMark('☁ güncel');}catch(e){cloudMark('☁ çevrimdışı');}}
