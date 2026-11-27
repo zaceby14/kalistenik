@@ -3365,8 +3365,8 @@ const DAYS=[
   {id:'g2b',alt:["CORE_PELVIS", "CORE_ARCH"],lad:'CORE_HOLLOW',def:3,reg:'KARIN',hold:'3 × 20-30 sn',reps:'3 × 8-10 / taraf',rest:40,tip:'Bel yere yapışık; kalkarsa kısalt'},
   {id:'g2c',lad:'PL_LEAN',def:2,reg:'OMUZ',hold:'4 × 15-20 sn',reps:'4 × 6-8',rest:75,tip:'Kürek açık, dirsek kilitli'},
   {id:'g2d',alt:["PL_BENT"],lad:'PL_TUCK',def:3,reg:'KARIN',hold:'4 × 5-10 sn',reps:'4 × 5-6',rest:75,tip:'Dirsek düz, kalça yukarı, ayak ellere'},
-  {id:'g2e',lad:'PL_PUSH',def:3,reg:'GÖĞÜS',hold:'—',reps:'3 × 5-8',rest:75,tip:'Omuz bileğin önünde; dirsek geriye'},
   {id:'g2f',alt:["PU_LAT", "PU_GRIP", "PU_SHLD"],lad:'PU_ISO',def:3,reg:'SIRT',hold:'4 × 10-15 sn (1. set ayak destekli)',reps:'4 × 3-5',rest:75,tip:'Çene bar üstü, omuz aşağı kilitli'},
+  {id:'g2e',lad:'PL_PUSH',def:3,reg:'GÖĞÜS',hold:'—',reps:'3 × 5-8',rest:75,tip:'Omuz bileğin önünde; dirsek geriye'},
   {id:'g2g',alt:["LG_KNEE", "LG_HINGE", "LG_NORDIC"],lad:'LG_QUAD',def:7,reg:'BACAK',hold:'—',reps:'3 × 6-8 / bacak',rest:45,tip:'Diz ayak hattında; ağrısız aralık'},
  ]},
  {id:'g3',t:'Gün 3',name:'Press + L-sit',end:'Kapıda lat esnemesi, 1 × 30 sn / taraf',endKey:'lat stretch calisthenics',slots:[
@@ -3427,7 +3427,7 @@ function histLine(s){const h=state.hist[lkey(s)];if(!h||h.length<2)return '';ret
 function stepSvg(h,max){if(!h||h.length<2)return '';const W=120,H=28,t0=h[0].ts,t1=Math.max(h[h.length-1].ts,t0+1),xs=x=>4+(x-t0)/(t1-t0)*(W-8),ys=v=>H-3-(v-1)/Math.max(1,max-1)*(H-6);
   let p='M'+xs(h[0].ts).toFixed(1)+' '+ys(h[0].lv).toFixed(1);h.slice(1).forEach(x=>{p+=' H'+xs(x.ts).toFixed(1)+' V'+ys(x.lv).toFixed(1);});
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><path d="${p}" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>`;}
-DAYS.forEach(d=>d.slots.forEach(s=>{if(!s.alt)return;s.base=s.lad;delete s.lad;Object.defineProperty(s,'lad',{get(){const a=state.alt&&state.alt[s.id];return a&&LADDERS[a]&&s.alt.includes(a)?a:s.base;},enumerable:true});}));
+DAYS.forEach(d=>d.slots.forEach(s=>{if(!s.alt)return;s.base=s.lad;delete s.lad;Object.defineProperty(s,'lad',{get(){if(PVA[s.id]&&(PVA[s.id]===s.base||s.alt.includes(PVA[s.id])))return PVA[s.id];const a=state.alt&&state.alt[s.id];return a&&LADDERS[a]&&s.alt.includes(a)?a:s.base;},enumerable:true});}));
 /* bulut kaydı (Firebase Firestore, REST) */
 const FB='https://firestore.googleapis.com/v1/projects/kalistenik-kayit/databases/(default)/documents/kalistenik/',FBK='AIzaSyClXgjeUd0p9_DcN41TMIRvKZlmCjKEwnI';
 let cloudT=null,cloudBusy=false,cloudAgain=false;
@@ -3483,6 +3483,7 @@ function nextOf(k,n){let i=0;try{i=(+localStorage.getItem('kal-sira-'+k)||0);loc
 function playA(k,force){if(!sesOn()&&!force)return;const mine=MYS[k]||[];const a=mine.length?mine.map(x=>x.url):(AUD[k]||[]).map(n=>AUDF[n]);if(!a||!a.length)return;try{const el=aEl();el.pause();el.src=a[nextOf(k,a.length)];el.volume=1;el.play().catch(()=>{});}catch(e){}}
 function hype(k){playA(k);}
 function warmSpeech(){try{const el=aEl();el.src=SIL;el.volume=1;el.play().catch(()=>{});}catch(e){}}
+function tone(f,d,v=.3,type='sine',o=0){try{if(!sesOn()||!AC)return;const t0=AC.currentTime+o,os=AC.createOscillator(),g=AC.createGain();os.type=type;os.frequency.value=f;g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(v,t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+d);os.connect(g).connect(AC.destination);os.start(t0);os.stop(t0+d+.02);}catch(e){}}
 function beep(){try{if(!AC)return;[0,.28].forEach(o=>{const t=AC.currentTime+o,os=AC.createOscillator(),g=AC.createGain();os.frequency.value=880;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.35,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.2);os.connect(g).connect(AC.destination);os.start(t);os.stop(t+.22);});}catch(e){}}
 let WL=null;
 async function wake(on){try{if(on){if(!WL&&navigator.wakeLock){WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null;});}}else if(WL){await WL.release();WL=null;}}catch(e){}}
@@ -3569,7 +3570,7 @@ function openSlot(id,view,ctx){
   const sh=$('#sheet');
   sh.innerHTML=`<div class="wrap">
    <div class="bar"><button class="back" id="back">← ${inRun?'Antrenmana dön':d.t}</button><span class="chip" style="color:${REG[s.reg]}">${s.reg}</span></div>
-   ${s.alt?`<div class="alts" role="tablist" aria-label="Hareket seçimi">${[s.base,...s.alt].map(a=>`<button class="altb ${a===s.lad?'on':''}" data-alt="${a}">${a===s.base?'Ana: ':''}${esc(ALTN[a]||LADDERS[a].name)}</button>`).join('')}</div>`:''}
+   ${s.alt?`<div class="alts" role="tablist" aria-label="Hareket seçimi">${[s.base,...s.alt].map(a=>`<button class="altb ${a===s.lad?'on':''}" data-alt="${a}">${a===committedLad(s)?'✓ ':''}${a===s.base?'Ana: ':''}${esc(ALTN[a]||LADDERS[a].name)}</button>`).join('')}</div>${s.lad!==committedLad(s)?`<div class="chg"><span>Önizleme — programdaki hareket değişmedi</span><button class="btn" data-altuse="${s.lad}" style="width:auto;padding:8px 14px">Bunu kullan</button></div>`:''}`:''}
    <div><p class="lvname">${esc(lv.tr)}</p><p class="en">${esc(lv.en)} · seviye ${vl}/${L.levels.length}${vl===chosen?' · senin seviyen':''}</p>${L.trains?`<p class="en" style="margin-top:2px"><b>${esc(L.name)}</b> — ${esc(L.trains)}</p>`:''}</div>
    ${(()=>{const c=state.chg[lkey(s)];return c&&Date.now()-c.ts<21*864e5?`<div class="chg"><span>${c.to>c.from?'↑':'↓'} Seviye ${c.from} → ${c.to} (${esc(c.why)})</span><button class="linkbtn" id="undo">Geri al</button></div>`:'';})()}
    ${histLine(s)?`<p class="en">Geçmiş: ${histLine(s)} ${stepSvg(state.hist[lkey(s)],L.levels.length)}</p>`:''}
@@ -3589,7 +3590,9 @@ function openSlot(id,view,ctx){
   sh.hidden=false; document.body.style.overflow='hidden'; if(!view) sh.scrollTop=0;
 }
 function ladderBox(L,chosen,vl){return `<div class="box"><h3>Seviyeler · kolaydan zora — dokun, incele</h3><div class="ladder">${L.levels.map((x,i)=>`<button class="lv ${i+1===chosen?'cur':''} ${i+1===vl?'view':''}" data-lv="${i+1}"><b>${i+1}</b><span>${esc(x.tr)}</span>${i+1===chosen?'<em>seninki</em>':''}</button>`).join('')}</div></div>`;}
-function closeSheet(){const fromRun=open&&open.ctx==='run';$('#sheet').hidden=true;$('#sheet').innerHTML='';open=null;
+const PVA={};/* alternatif önizlemesi (kaydedilmez) */
+function committedLad(s){const a=state.alt&&state.alt[s.id];return a&&LADDERS[a]&&s.alt.includes(a)?a:s.base;}
+function closeSheet(){for(const k in PVA)delete PVA[k];const fromRun=open&&open.ctx==='run';$('#sheet').hidden=true;$('#sheet').innerHTML='';open=null;
   if(run){if(!fromRun)stopT();drawRun(!fromRun);}else{stopT();document.body.style.overflow='';render(false);}}
 let tI=null,tL=0;
 function stopT(){clearInterval(tI);tI=null;}
@@ -3598,14 +3601,15 @@ function startT(sec){stopT();tL=sec;const el=$('#timer');el.classList.remove('en
     if(tL<=0){stopT();e.textContent='BAS!';e.classList.add('end');if(sesOn())hype('go');else beep();try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(x){}}},1000);}
 const slotById=id=>DAYS.flatMap(d=>d.slots).find(x=>x.id===id);
 document.addEventListener('click',ev=>{
-  const t=ev.target.closest('[data-tab],[data-slot],#back,[data-lv],#pick,[data-set],#tstart,#treset,#save,[data-del],#bkout,#bkin,[data-alt],#undo,#tsave,[data-tdel],[data-stest],[data-sdel]'); if(!t) return;
+  const t=ev.target.closest('[data-tab],[data-slot],#back,[data-lv],#pick,[data-set],#tstart,#treset,#save,[data-del],#bkout,#bkin,[data-alt],[data-altuse],#undo,#tsave,[data-tdel],[data-stest],[data-sdel]'); if(!t) return;
   if(t.id==='undo'){const s=slotById(open.id),c=state.chg[lkey(s)];if(c){setLvl(s,c.from);persist();}openSlot(s.id,0,open.ctx);return;}
   if(t.id==='tsave'){const vals={};TESTS.forEach(([k])=>{const e=$('#t-'+k),v=e&&e.value.trim().replace(',','.');if(v!==''&&!isNaN(+v))vals[k]=+v;});if(!Object.keys(vals).length){$('#tmsg').textContent='En az bir değer gir.';return;}
     state.tests.push({ts:Date.now(),date:new Date().toLocaleDateString('tr-TR'),vals});persist();render(false);return;}
   if(t.dataset.stest){unlockAudio();playA(t.dataset.stest,true);return;}
   if(t.dataset.sdel){delMys(t.dataset.sdel).then(()=>render(false));return;}
   if(t.dataset.tdel){state.tests.splice(+t.dataset.tdel,1);persist();render(false);return;}
-  if(t.dataset.alt){const s=slotById(open.id);state.alt=state.alt||{};if(t.dataset.alt===s.base)delete state.alt[s.id];else state.alt[s.id]=t.dataset.alt;persist();const keep=open.ctx;open=null;openSlot(s.id,undefined,keep);if(run)drawRun(true);return;}
+  if(t.dataset.alt){const s=slotById(open.id);if(t.dataset.alt===committedLad(s))delete PVA[s.id];else PVA[s.id]=t.dataset.alt;const keep=open.ctx;open=null;openSlot(s.id,undefined,keep);return;}
+  if(t.dataset.altuse){const s=slotById(open.id),a=t.dataset.altuse;delete PVA[s.id];state.alt=state.alt||{};if(a===s.base)delete state.alt[s.id];else state.alt[s.id]=a;persist();const keep=open.ctx;open=null;openSlot(s.id,undefined,keep);if(run)drawRun(true);return;}
   if(t.dataset.tab){ev.preventDefault();cur=t.dataset.tab;try{history.replaceState(null,'','#'+cur);}catch(e){}render();return;}
   if(t.dataset.slot){openSlot(t.dataset.slot,0,run&&t.closest('#run')?'run':'day');return;}
   if(t.id==='back'){closeSheet();return;}
@@ -3636,7 +3640,7 @@ function runSteps(d){return [{k:'warm'},{k:'pre'},...d.slots.map(s=>({k:'ex',s})
 let clockI=null;
 const mmss=ms=>{const t=Math.max(0,Math.floor(ms/1000));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
 function startRun(dayId){const d=DAYS.find(x=>x.id===dayId);run={d,i:0,steps:runSteps(d),done:{},holds:{},fb:{},notes:Object.assign({},(state.draftNotes||{})[dayId]||{}),t0:Date.now(),hw:null};unlockAudio();warmSpeech();$('#run').hidden=false;document.body.style.overflow='hidden';wake(true);
-  clearInterval(clockI);clockI=setInterval(()=>{if(!run){clearInterval(clockI);return;}const c=$('#rclock');if(c&&!run.tEnd)c.textContent=mmss(Date.now()-run.t0);if(run.hw){const sn=Math.floor((Date.now()-run.hw.t)/1000);}const h=$('#holdt');if(h&&run.hw){const sec=Math.floor((Date.now()-run.hw.t)/1000);h.textContent=sec+' sn';const tm=$('#timer');if(tm){tm.textContent=sec+' sn';tm.classList.remove('end');}}},250);drawRun();}
+  clearInterval(clockI);clockI=setInterval(()=>{if(!run){clearInterval(clockI);return;}const c=$('#rclock');if(c&&!run.tEnd)c.textContent=mmss(Date.now()-run.t0);if(run.hw){const sn=Math.floor((Date.now()-run.hw.t)/1000);}const h=$('#holdt');if(h&&run.hw){const sec=Math.floor((Date.now()-run.hw.t)/1000);h.textContent=sec+' sn';const tm=$('#timer');if(tm){tm.textContent=sec+' sn'+(run.hw.lo?' / '+run.hw.lo+(run.hw.hi?'-'+run.hw.hi:''):'');tm.classList.toggle('end',sec>=run.hw.lo&&run.hw.lo>0);}if(run.hw.lo&&sec===run.hw.lo&&run.hw.last!==-1){run.hw.last=-1;tone(880,.15,.35);tone(1175,.25,.35,'sine',.16);}if(run.hw.hi&&sec===run.hw.hi&&run.hw.last!==-2){run.hw.last=-2;tone(1175,.12,.35);tone(1175,.12,.35,'sine',.18);tone(1568,.3,.35,'sine',.36);}}},250);drawRun();}
 function endRun(){try{if(AEL)AEL.pause();}catch(e){}stopT();clearInterval(clockI);wake(false);$('#run').hidden=true;$('#run').innerHTML='';document.body.style.overflow='';run=null;}
 function stretchMedia(k){const dr=DRAW['ST:'+k],v=vidsOf(k)[0];
   return (dr?`<div class="stage"><span class="tag">Esneme çizimi · ${dr.view||(dr.k.some(p=>p.front)?'önden':'yandan')}</span><div class="anim" data-draw="ST:${k}"></div><span class="cap" data-cap="ST:${k}">&nbsp;</span></div>`:'')+(v?vidLink(v):'');}
@@ -3664,7 +3668,7 @@ function drawRun(keep){
      <div class="box"><h3>${dose} · dinlenme ${s.rest} sn — bitirdiğin sete dokun</h3><div class="sets bigsets">${dn.map((x,j)=>`<button class="set ${x?'done':''}" data-rset="${j}" aria-pressed="${x}">${j+1}</button>`).join('')}</div>
      <div class="timer" id="timer" style="margin-top:12px">${all?'Hazır':s.rest}</div>
      ${lv.type==='hold'&&!all?`<button class="btn holdbtn ${run.hw&&run.hw.id===s.id?'on':''}" data-rhold="1">${run.hw&&run.hw.id===s.id?'⏹ Bitir · <span id="holdt">0 sn</span>':'⏱ Tutuşu başlat'}</button>`:''}
-     ${(run.holds[s.id]||[]).length?`<p class="holds">Tutuşlar: ${run.holds[s.id].map(x=>x+' sn').join(' · ')}</p>`:''}
+     ${run.short===s.id?`<p class="rule" style="color:#c8463d">Hedefin altında kaldı — set sayılmadı, dinlen ve tekrar dene.</p>`:''}${(run.holds[s.id]||[]).length?`<p class="holds">Tutuşlar: ${run.holds[s.id].map(x=>x+' sn').join(' · ')}</p>`:''}
      ${ruleHtml(n,L,dose)}</div>
      ${mediaHtml(s.lad,n,lv,1)}
      ${img?`<div class="photos"><figure><img src="${img[0]}" alt=""><figcaption>Başlangıç</figcaption></figure><figure><img src="${img[1]}" alt=""><figcaption>Bitiş</figcaption></figure></div>`:''}
@@ -3683,9 +3687,9 @@ document.addEventListener('click',ev=>{
   if(t.dataset.rses){const on=!sesOn();try{localStorage.setItem('kal-ses',on?'1':'0');}catch(e){}t.textContent=on?'🔊':'🔇';if(on){warmSpeech();setTimeout(()=>playA('on'),200);}else{try{aEl().pause();}catch(e){}}return;}
   if(t.dataset.rfb){const s=run.steps[run.i].s;run.fb[s.id]=run.fb[s.id]===t.dataset.rfb?undefined:t.dataset.rfb;drawRun(true);return;}
   if(t.dataset.rhold){const s=run.steps[run.i].s;
-    if(!run.hw){stopT();run.hw={id:s.id,t:Date.now(),last:0};hype('hold');drawRun(true);return;}
-    const sec=Math.round((Date.now()-run.hw.t)/1000);run.hw=null;(run.holds[s.id]=run.holds[s.id]||[]).push(sec);
-    const dn=run.done[s.id],j=dn.indexOf(false);if(j>=0)dn[j]=true;drawRun(true);
+    if(!run.hw){stopT();const L=LADDERS[s.lad],lv=L.levels[lvlOf(s)-1],m=(doseOf(s,lv).match(/(\d+)\s*-\s*(\d+)\s*sn/)||doseOf(s,lv).match(/(\d+)()\s*sn/));run.hw={id:s.id,t:Date.now(),last:0,lo:m?+m[1]:0,hi:m&&m[2]?+m[2]:0};run.short=null;hype('hold');drawRun(true);return;}
+    const sec=Math.round((Date.now()-run.hw.t)/1000),lo=run.hw.lo||0;run.hw=null;(run.holds[s.id]=run.holds[s.id]||[]).push(sec);
+    const dn=run.done[s.id],j=dn.indexOf(false);if(sec<lo){run.short=s.id;drawRun(true);startT(s.rest);return;}run.short=null;if(j>=0)dn[j]=true;drawRun(true);
     if(dn.every(Boolean)){const e=$('#timer');e.textContent='Hazır';e.classList.add('end');hype('ex');}else{playA('set');startT(s.rest);}return;}
   if(t.dataset.run){startRun(t.dataset.run);return;}
   if(t.dataset.runx){const fi=run.steps.findIndex(x=>x.k==='fin');const any=Object.values(run.done).some(a=>a.some(Boolean));if(any&&run.i!==fi){run.i=fi;stopT();drawRun();return;}endRun();render(false);return;}
