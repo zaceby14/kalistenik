@@ -643,7 +643,7 @@ header.top{padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px}
 .pw-dots.bad i{background:#ff5a4f;border-color:#ff5a4f}
 .pw-m{min-height:20px;margin:0;font-size:14px;font-weight:600;color:#ff8a7f}
 .pad{display:grid;grid-template-columns:repeat(3,76px);gap:14px 22px}
-.prof .pad button{min-height:0;width:76px;height:76px;padding:0;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.07);color:#fff;font:600 30px var(--display);box-shadow:none;animation:none;transition:background-color .15s,transform .2s var(--spring)}
+.prof .pad button{min-height:0;width:76px;height:76px;padding:0;border-radius:50%;display:grid;place-items:center;place-content:center;justify-content:center;align-content:center;gap:0;line-height:1;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.07);color:#fff;font:600 30px var(--display);box-shadow:none;animation:none;transition:background-color .15s,transform .2s var(--spring)}
 .prof .pad button:active{background:rgba(255,255,255,.24);transform:scale(.92);transition-duration:.05s}
 .prof .pad button .ic{width:28px;height:28px}
 .prof .pad [data-k=del]{background:transparent;border-color:transparent}
@@ -4078,7 +4078,7 @@ function openSlot(id,view,ctx){
   const sh=$('#sheet');
   sh.innerHTML=`<div class="wrap">
    <div class="bar sbar"><button class="back" id="back">${ic('back')}<span>${inRun?'Antrenmana dön':d.t}</span></button><span class="chip" style="color:${REG[s.reg]}">${s.reg}</span></div>
-   ${s.lad!==committedLad(s)?`<div class="chg altprev"><span><b>Önizleme</b> · programda hâlâ “${esc(ALTN[committedLad(s)]||LADDERS[committedLad(s)].name)}” var</span><button class="btn" data-altuse="${s.lad}" style="width:auto;padding:10px 16px">Bunu kullan</button></div>`:''}
+   ${s.alt&&s.lad!==committedLad(s)?`<div class="chg altprev"><span><b>Önizleme</b> · programda hâlâ “${esc(ALTN[committedLad(s)]||LADDERS[committedLad(s)].name)}” var</span><button class="btn" data-altuse="${s.lad}" style="width:auto;padding:10px 16px">Bunu kullan</button></div>`:''}
    <div class="ttl"><p class="lvname">${esc(lv.tr)}</p><p class="en">${esc(lv.en)}</p><p class="lvchips"><span class="lvc">Seviye ${vl}/${L.levels.length}</span>${vl===chosen?'<span class="lvc me">Senin seviyen</span>':''}</p>${L.trains?`<p class="en" style="margin-top:2px"><b>${esc(L.name)}</b> — ${esc(L.trains)}</p>`:''}</div>
    ${s.alt?`<div class="altsec"><div class="altsec-h">${ic('swap')}<b>Bu slotun seçenekleri</b><span>${s.alt.length+1} hareket · birini seç</span></div>${[s.base,...s.alt].map(a=>{const LL=LADDERS[a],cur=committedLad(s)===a,vw=s.lad===a,nn=state.levels[a===s.base?s.id:s.id+':'+a]??(a===s.base?s.def:1);return `<button class="altc ${vw?'on':''} ${cur?'cur':''}" data-alt="${a}"><span class="altc-t">${thumbSvg(a,Math.min(nn,LL.levels.length))}</span><span class="altc-m"><b>${a===s.base?'Ana hareket · ':'Alternatif · '}${esc(ALTN[a]||LL.name)}</b><small>${esc(LL.trains||LL.name)}</small></span><span class="altc-s">${cur?`<em class="ok">${ic('check')} Programda</em>`:vw?'<em>Bakıyorsun</em>':'<em class="pv">Önizle</em>'}</span></button>`;}).join('')}</div>`:''}
    ${(()=>{const c=state.chg[lkey(s)];return c&&Date.now()-c.ts<21*864e5?`<div class="chg"><span>${c.to>c.from?'↑':'↓'} Seviye ${c.from} → ${c.to} (${esc(c.why)})</span><button class="linkbtn" id="undo">Geri al</button></div>`:'';})()}
