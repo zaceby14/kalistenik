@@ -349,14 +349,19 @@ function svgFor(d,time){
     if(part&1) J.legs.forEach(([k,f,fr,st,o0])=>{if(fr===far){const t=foot(k,f,st);o+=seg2(o0,k,col,.12)+seg2(k,f,col,.09)+ln(f,t,col,.06)+dot(k,.022)+dot(f,.018);}});
     if(part&2) J.arms.forEach(([e,h,fr,o0])=>{if(fr===far) o+=seg2(o0,e,col,.085)+seg2(e,h,col,.07)+dot(e,.018)+dot(h,.015);});return o;};
   const torso=()=>{const T=J.T,dx=T[0]-J.P[0],dy=T[1]-J.P[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,ws=p.front?.17:.1,wp=p.front?.13:.075;
-    if(p.front||!p.sc){const pts=[[T[0]+nx*ws,T[1]+ny*ws],[T[0]-nx*ws,T[1]-ny*ws],[J.P[0]-nx*wp,J.P[1]-ny*wp],[J.P[0]+nx*wp,J.P[1]+ny*wp]];
-      return `<polygon points="${pts.map(q=>F(q[0])+','+F(Y(q[1]))).join(' ')}" fill="var(--ink)" stroke="var(--ink)" stroke-width=".04" stroke-linejoin="round"/>`;}
-    /* sırt eğrisi + kürek kemiği: rb>0 kürek açık (üst sırt kabarır), rb<0 kürek sıkışık */
-    const fa=p.facing??1,sg=Math.abs(ny)>.3?(ny>0?1:-1):(nx*fa<0?1:-1),bx=nx*sg,by=ny*sg,rb=p.rb||0;
-    const Q=(a,u,v)=>[a[0]+bx*u+dx/L*v,a[1]+by*u+dy/L*v],U=[T[0]-dx*.3,T[1]-dy*.3],M=[T[0]-dx*.55,T[1]-dy*.55];
-    const pts=[Q(T,ws,0),Q(U,ws+rb,0),Q(M,(ws+wp)/2+rb*.35,0),Q(J.P,wp,0),Q(J.P,-wp,0),Q(M,-(ws+wp)/2+rb*.2,0),Q(U,-ws+rb*.5,0),Q(T,-ws,0)];
-    const bl=Q(U,ws+rb+.035,.02),b2=Q(U,ws+rb+.035,-.13+rb*.3);
-    return `<polygon points="${pts.map(q=>F(q[0])+','+F(Y(q[1]))).join(' ')}" fill="var(--ink)" stroke="var(--ink)" stroke-width=".04" stroke-linejoin="round"/>`+ln(bl,b2,'var(--accent)',.055);};
+    const fa=p.facing??1,sg=Math.abs(ny)>.3?(ny>0?1:-1):(nx*fa<0?1:-1),bx=nx*sg,by=ny*sg,rb=p.front?0:(p.rb||0);
+    const at=(f,u)=>[T[0]-dx*f+bx*u,T[1]-dy*f+by*u];
+    /* omurga: göğüs kafesi (geniş) → bel (dar) → leğen; rb ile üst sırt eğrisi */
+    const side=k=>[[0,ws*.92],[.12,ws*1.12+(k>0?rb:rb*.5)],[.38,ws*1.02+(k>0?rb*.8:rb*.3)],[.62,wp*.82+rb*.3*k],[.86,wp*1.08],[1,wp*.95]].map(([f,w])=>at(f,k*w));
+    const A=side(1),B=side(-1).reverse(),pts=[...A,...B];
+    let d='M'+F(pts[0][0])+' '+F(Y(pts[0][1]));for(let i=1;i<pts.length;i++){const a=pts[i-1],c=pts[i],m=[(a[0]+c[0])/2,(a[1]+c[1])/2];d+=' Q'+F(a[0])+' '+F(Y(a[1]))+' '+F(m[0])+' '+F(Y(m[1]));}
+    d+=' L'+F(pts[pts.length-1][0])+' '+F(Y(pts[pts.length-1][1]))+' Z';
+    let o=`<path d="${d}" fill="var(--ink)" stroke="var(--ink)" stroke-width=".035" stroke-linejoin="round"/>`;
+    const jd=(q,r)=>`<circle cx="${F(q[0])}" cy="${F(Y(q[1]))}" r="${r}" fill="${OL}" fill-opacity=".5"/>`;
+    o+=`<path d="M${F(at(.62,-wp*.5)[0])} ${F(Y(at(.62,-wp*.5)[1]))} L${F(at(.62,wp*.5)[0])} ${F(Y(at(.62,wp*.5)[1]))}" stroke="${OL}" stroke-opacity=".35" stroke-width=".012"/>`;
+    o+=jd(J.T,.024)+jd(J.P,.026);
+    if(p.sc&&!p.front){const bl=at(.1,ws+rb+.04),b2=at(.42,ws+rb*.8+.03);o+=ln(bl,b2,'var(--accent)',.05);}
+    return o;};
   s+=limb(true);
   s+=ln(J.T,J.head,'var(--ink)',.07)+torso()+`<circle cx="${F(J.head[0])}" cy="${F(Y(J.head[1]))}" r=".1" fill="var(--ink)" stroke="${OL}" stroke-width=".025"/>`;
   s+=limb(false,1)+front()+limb(false,2);
@@ -3380,6 +3385,9 @@ Object.values(DRAW).forEach(d=>{if(!d||!d.k)return;let hit=false;d.k.forEach(p=>
   if(/sırt kabarır|üst sırt yükselir|kürekleri aç|kürek açılır|kürekler açılır|protrak/i.test(c)){p.rb=.06;hit=true;}
   else if(/kürekleri sık|kürekleri birleştir|göğüs çöker|kürekler birleşir|retrak/i.test(c)){p.rb=-.045;hit=true;}});
   if(hit){d.k.forEach(p=>{p.sc=1;p.rb=p.rb||0;});d._b=null;}});
+Object.values(DRAW).forEach(d=>{if(!d||!d.k)return;d.k.forEach(p=>{if(p.sc||p.front)return;const c=p.cap||'';
+  if(/hollow|kambur|sırtı yuvarla|çanak|bel yere bas|kürekler yerden/i.test(c))p.rb=.035;
+  else if(/arch|kavis|göğüs öne|superman|kobra|cobra/i.test(c))p.rb=-.03;});});
 
 /* kayıt */
 const PROFS={zeynel:{ad:'Zeynel',cls:'',h:'3d8295dca3c20ede915b542f6002d7b063319e889e0e1bd10066ad6469ba0eb3'},bayram:{ad:'Bayram',cls:'s',h:'c78ff0eb8c8dd03b0baf595219c496635ec51480a756b7ddd81481113fca1d8d'}};
