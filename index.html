@@ -208,6 +208,7 @@ header.top{position:sticky;top:0;z-index:20;backdrop-filter:saturate(1.4) blur(1
 .prof button:active{transform:scale(.96)}
 .prof .gz,.prof .gb{animation:proFloat 3s ease-in-out infinite}
 .prof h1{background:linear-gradient(90deg,var(--ink),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.resume{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:30;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--accent);border-radius:16px;padding:10px 12px;box-shadow:0 14px 34px -12px rgba(0,0,0,.45);animation:proUp .4s both}.resume span{flex:1}
 .sheet,.run{z-index:40!important}.vp{z-index:60!important}
 @keyframes proIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes proUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
@@ -3440,7 +3441,7 @@ async function cloudPull(){if(!PROF||!PROFS[PROF].h){cloudMark(PROF?'· sadece b
   if(ts>(state._ts||0)){const d=JSON.parse(j.fields.data.stringValue);const dn=state.draftNotes;state=Object.assign({levels:{},log:[],alt:{},fb:{},hist:{},chg:{},tests:[]},d);if(dn)state.draftNotes=dn;fixState();try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}if(!open&&!(typeof run!=='undefined'&&run))render(false);cloudMark('☁ güncel');}
   else if(ts<(state._ts||0))cloudPush();else cloudMark('☁ güncel');}catch(e){cloudMark('☁ çevrimdışı');}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')cloudPull();});
-setTimeout(cloudPull,300);
+setTimeout(cloudPull,300);setTimeout(resumeBar,400);
 function persist(){state._ts=Date.now();clearTimeout(cloudT);cloudT=setTimeout(cloudPush,1200);try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){} if(store){clearTimeout(saveT);saveT=setTimeout(flush,600);}}
 async function flush(){if(!store)return; if(saving){again=true;return;} saving=true;
   try{await store.set({levels:state.levels,alt:state.alt||{},log:state.log.slice(0,300),fb:state.fb,hist:state.hist,chg:state.chg,tests:state.tests.slice(-60)});}catch(e){setStatus('Kayıt buluta gitmedi; bu cihazda saklandı.');}
@@ -3641,7 +3642,14 @@ let clockI=null;
 const mmss=ms=>{const t=Math.max(0,Math.floor(ms/1000));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
 function startRun(dayId){const d=DAYS.find(x=>x.id===dayId);run={d,i:0,steps:runSteps(d),done:{},holds:{},fb:{},notes:Object.assign({},(state.draftNotes||{})[dayId]||{}),t0:Date.now(),hw:null};unlockAudio();warmSpeech();$('#run').hidden=false;document.body.style.overflow='hidden';wake(true);
   clearInterval(clockI);clockI=setInterval(()=>{if(!run){clearInterval(clockI);return;}const c=$('#rclock');if(c&&!run.tEnd)c.textContent=mmss(Date.now()-run.t0);if(run.hw){const sn=Math.floor((Date.now()-run.hw.t)/1000);}const h=$('#holdt');if(h&&run.hw){const sec=Math.floor((Date.now()-run.hw.t)/1000);h.textContent=sec+' sn';const tm=$('#timer');if(tm){tm.textContent=sec+' sn'+(run.hw.lo?' / '+run.hw.lo+(run.hw.hi?'-'+run.hw.hi:''):'');tm.classList.toggle('end',sec>=run.hw.lo&&run.hw.lo>0);}if(run.hw.lo&&sec===run.hw.lo&&run.hw.last!==-1){run.hw.last=-1;tone(880,.15,.35);tone(1175,.25,.35,'sine',.16);}if(run.hw.hi&&sec===run.hw.hi&&run.hw.last!==-2){run.hw.last=-2;tone(1175,.12,.35);tone(1175,.12,.35,'sine',.18);tone(1568,.3,.35,'sine',.36);}}},250);drawRun();}
-function endRun(){try{if(AEL)AEL.pause();}catch(e){}stopT();clearInterval(clockI);wake(false);$('#run').hidden=true;$('#run').innerHTML='';document.body.style.overflow='';run=null;}
+const RUNK=()=>'kal-run-'+(typeof PROF!=='undefined'&&PROF||'x');
+function saveRun(){if(!run||run.tEnd)return;try{localStorage.setItem(RUNK(),JSON.stringify({dayId:run.d.id,i:run.i,done:run.done,holds:run.holds,fb:run.fb,notes:run.notes,t0:run.t0,ts:Date.now()}));}catch(e){}}
+function clearRun(){try{localStorage.removeItem(RUNK());}catch(e){}}
+function loadRun(){try{const r=JSON.parse(localStorage.getItem(RUNK())||'null');if(r&&Date.now()-r.ts<12*3600e3&&DAYS.some(d=>d.id===r.dayId))return r;}catch(e){}return null;}
+function resumeRun(r){startRun(r.dayId);Object.assign(run,{i:Math.min(r.i,run.steps.length-1),done:r.done||{},holds:r.holds||{},fb:r.fb||{},notes:r.notes||{},t0:r.t0});drawRun();}
+function resumeBar(){const r=loadRun();let b=document.getElementById('resume');if(!r||run){if(b)b.remove();return;}const d=DAYS.find(x=>x.id===r.dayId);if(!b){b=document.createElement('div');b.id='resume';b.className='resume';document.body.appendChild(b);}
+  b.innerHTML=`<span><b>Yarım antrenman</b><br><small>${esc(d.t)} · adım ${r.i+1} · ${Math.round((Date.now()-r.ts)/60000)} dk önce</small></span><button class="btn" data-resume="1" style="width:auto;padding:10px 16px">Devam et</button><button class="linkbtn" data-resumex="1">Sil</button>`;}
+function endRun(){clearRun();try{if(AEL)AEL.pause();}catch(e){}stopT();clearInterval(clockI);wake(false);$('#run').hidden=true;$('#run').innerHTML='';document.body.style.overflow='';run=null;}
 function stretchMedia(k){const dr=DRAW['ST:'+k],v=vidsOf(k)[0];
   return (dr?`<div class="stage"><span class="tag">Esneme çizimi · ${dr.view||(dr.k.some(p=>p.front)?'önden':'yandan')}</span><div class="anim" data-draw="ST:${k}"></div><span class="cap" data-cap="ST:${k}">&nbsp;</span></div>`:'')+(v?vidLink(v):'');}
 function drawRun(keep){
@@ -3679,10 +3687,10 @@ function drawRun(keep){
      <button class="linkbtn" data-slot="${s.id}">Seviyeyi değiştir / tüm seviyeler ›</button>
      ${nav(i===tot-3?'Son esnemeye geç →':'Sonraki hareket →',all)}`;
   }
-  const y=el.scrollTop; el.innerHTML=`<div class="wrap">${head}${body}</div>`; el.scrollTop=keep?y:0;
+  const y=el.scrollTop; el.innerHTML=`<div class="wrap">${head}${body}</div>`;saveRun();{const rb=document.getElementById('resume');if(rb)rb.remove();} el.scrollTop=keep?y:0;
 }
 document.addEventListener('click',ev=>{
-  const t=ev.target.closest('[data-run],[data-runx],[data-rprev],[data-rnext],[data-rset],[data-rsave],[data-rhold],[data-rfb],[data-rses]'); if(!t) return;
+  const t=ev.target.closest('[data-run],[data-runx],[data-rprev],[data-rnext],[data-rset],[data-rsave],[data-rhold],[data-rfb],[data-rses],[data-resume],[data-resumex]'); if(!t) return;
   unlockAudio();
   if(t.dataset.rses){const on=!sesOn();try{localStorage.setItem('kal-ses',on?'1':'0');}catch(e){}t.textContent=on?'🔊':'🔇';if(on){warmSpeech();setTimeout(()=>playA('on'),200);}else{try{aEl().pause();}catch(e){}}return;}
   if(t.dataset.rfb){const s=run.steps[run.i].s;run.fb[s.id]=run.fb[s.id]===t.dataset.rfb?undefined:t.dataset.rfb;drawRun(true);return;}
@@ -3691,14 +3699,18 @@ document.addEventListener('click',ev=>{
     const sec=Math.round((Date.now()-run.hw.t)/1000),lo=run.hw.lo||0;run.hw=null;(run.holds[s.id]=run.holds[s.id]||[]).push(sec);
     const dn=run.done[s.id],j=dn.indexOf(false);if(sec<lo){run.short=s.id;drawRun(true);startT(s.rest);return;}run.short=null;if(j>=0)dn[j]=true;drawRun(true);
     if(dn.every(Boolean)){const e=$('#timer');e.textContent='Hazır';e.classList.add('end');hype('ex');}else{playA('set');startT(s.rest);}return;}
-  if(t.dataset.run){startRun(t.dataset.run);return;}
+  if(t.dataset.run){clearRun();startRun(t.dataset.run);return;}
+  if(t.dataset.resume){const r=loadRun();if(r)resumeRun(r);return;}
+  if(t.dataset.resumex){clearRun();resumeBar();return;}
   if(t.dataset.runx){const fi=run.steps.findIndex(x=>x.k==='fin');const any=Object.values(run.done).some(a=>a.some(Boolean));if(any&&run.i!==fi){run.i=fi;stopT();drawRun();return;}endRun();render(false);return;}
   if(t.dataset.rprev){stopT();run.hw=null;run.i=Math.max(0,run.i-1);drawRun();return;}
   if(t.dataset.rnext){stopT();run.hw=null;run.i=Math.min(run.steps.length-1,run.i+1);drawRun();return;}
   if(t.dataset.rset){const s=run.steps[run.i].s,dn=run.done[s.id],j=+t.dataset.rset;dn[j]=!dn[j];
     t.classList.toggle('done',dn[j]);t.setAttribute('aria-pressed',dn[j]);
     if(dn.every(Boolean)){stopT();hype('ex');const e=$('#timer');e.textContent='Hazır';e.classList.add('end');const nb=document.querySelector('[data-rnext]');if(nb)nb.style.opacity='';}
-    else if(dn[j]){hype('set');startT(s.rest);} return;}
+    else if(dn[j]){hype('set');startT(s.rest);}
+    else{stopT();try{if(AEL)AEL.pause();}catch(x){}const e=$('#timer');if(e){e.classList.remove('end');e.textContent=s.rest;}}
+    saveRun();return;}
   if(t.dataset.rsave){const txt=($('#runnote').value||'').trim(),sm=runSummary(),mins=Math.max(1,Math.round((run.tEnd-run.t0)/60000));
     const now=Date.now(),dt=new Date().toLocaleDateString('tr-TR');
     run.d.slots.slice().reverse().forEach(s=>{const L=LADDERS[s.lad],n=lvlOf(s),lv=L.levels[n-1],dn=run.done[s.id]||[],h=run.holds[s.id]||[],nt=(run.notes[s.id]||'').trim();
