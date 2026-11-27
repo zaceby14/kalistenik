@@ -687,6 +687,11 @@ header.top{padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px}
 .altc-s em.pv{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
 .altprev{position:sticky;top:64px;z-index:5}
 .chip.altchip{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+
+.ralt{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:2px 0 12px;padding:10px 12px;border:1.5px dashed color-mix(in srgb,var(--rc,var(--accent)) 45%,var(--line));border-radius:14px}
+.ralt .as-l{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--muted);width:100%}.ralt .as-l svg{width:14px;height:14px}
+.asb{display:inline-flex;align-items:center;gap:4px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font:600 13px inherit;cursor:pointer;max-width:100%;text-align:left}
+.asb svg{width:13px;height:13px}.asb.on{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--surface));color:var(--ok)}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -4182,6 +4187,7 @@ function drawRun(keep){
     const all=dn.every(Boolean), exi=d.slots.indexOf(s)+1;
     body=`<div class="exhead"><span class="chip" style="color:${REG[s.reg]}">${s.reg}</span><span class="exn">Hareket ${exi}/${d.slots.length}</span></div>
      <div class="ttl"><p class="lvname">${esc(lv.tr)}</p><p class="en">${esc(lv.en)} · seviye ${n}/${L.levels.length}</p></div>
+     ${s.alt?`<div class="ralt" style="--rc:${REG[s.reg]}"><span class="as-l">${ic('swap')}Bunun yerine</span>${[s.base,...s.alt].map(a=>{const on=committedLad(s)===a;return `<button class="asb ${on?'on':''}" data-ralt="${a}" aria-pressed="${on}">${on?ic('check'):''}${esc(ALTN[a]||LADDERS[a].name)}</button>`;}).join('')}</div>`:''}
      <div class="box setbox"><div class="sbh"><span>${ic('repeat')}<b>${dose}</b></span><span>${ic('clock')}${s.rest} sn dinlenme</span></div><div class="sets bigsets">${dn.map((x,j)=>`<button class="set ${x?'done':''}" data-rset="${j}" aria-pressed="${x}" aria-label="Set ${j+1}">${j+1}</button>`).join('')}</div><p class="hint">Bitirdiğin sete dokun</p>
      <div class="timer" id="timer" style="margin-top:12px">${all?'Hazır':s.rest}</div>
      ${lv.type==='hold'&&!all?`<button class="btn holdbtn ${run.hw&&run.hw.id===s.id?'on':''}" data-rhold="1">${run.hw&&run.hw.id===s.id?ic('stop')+'<span>Bitir · <span id="holdt">0 sn</span></span>':ic('timer')+'<span>Tutuşu başlat</span>'}</button>`:''}
@@ -4199,9 +4205,10 @@ function drawRun(keep){
   const y=el.scrollTop; el.innerHTML=`<div class="wrap">${head}${body}</div>`;saveRun();{const rb=document.getElementById('resume');if(rb)rb.remove();} el.scrollTop=keep?y:0;
 }
 document.addEventListener('click',ev=>{
-  const t=ev.target.closest('[data-run],[data-runx],[data-rprev],[data-rnext],[data-rset],[data-rsave],[data-rhold],[data-rfb],[data-rses],[data-resume],[data-resumex]'); if(!t) return;
+  const t=ev.target.closest('[data-run],[data-runx],[data-rprev],[data-rnext],[data-rset],[data-rsave],[data-rhold],[data-rfb],[data-ralt],[data-rses],[data-resume],[data-resumex]'); if(!t) return;
   unlockAudio();
   if(t.dataset.rses){const on=!sesOn();try{localStorage.setItem('kal-ses',on?'1':'0');}catch(e){}t.innerHTML=on?ic('sound'):ic('mute');if(on){warmSpeech();setTimeout(()=>playA('on'),200);}else{try{aEl().pause();}catch(e){}}return;}
+  if(t.dataset.ralt){const s=run.steps[run.i].s,a=t.dataset.ralt;if(a===committedLad(s))return;if(run.hw&&run.hw.id===s.id)run.hw=null;stopT();delete PVA[s.id];state.alt=state.alt||{};if(a===s.base)delete state.alt[s.id];else state.alt[s.id]=a;persist();delete run.done[s.id];delete run.holds[s.id];run.short=null;drawRun(true);if(typeof window.toast==='function')window.toast('Hareket değiştirildi','swap');return;}
   if(t.dataset.rfb){const s=run.steps[run.i].s;run.fb[s.id]=run.fb[s.id]===t.dataset.rfb?undefined:t.dataset.rfb;drawRun(true);return;}
   if(t.dataset.rhold){const s=run.steps[run.i].s;
     if(!run.hw){stopT();const L=LADDERS[s.lad],lv=L.levels[lvlOf(s)-1],m=(doseOf(s,lv).match(/(\d+)\s*-\s*(\d+)\s*sn/)||doseOf(s,lv).match(/(\d+)()\s*sn/));run.hw={id:s.id,t:Date.now(),last:0,lo:m?+m[1]:0,hi:m&&m[2]?+m[2]:0};run.short=null;hype('hold');drawRun(true);return;}
