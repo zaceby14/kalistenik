@@ -67,7 +67,7 @@ h2{font-family:var(--display);font-weight:700;font-size:24px;text-transform:uppe
 .sheet .wrap{display:flex;flex-direction:column;gap:12px}
 .bar{display:flex;align-items:center;gap:10px}
 .back{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-weight:600;cursor:pointer}
-.lvname{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.05;text-transform:uppercase;margin:0;text-wrap:balance}
+.lvname{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.05;margin:0;text-wrap:balance;hyphens:none;word-break:normal;overflow-wrap:normal}
 .en{color:var(--muted);font-size:14px;margin:2px 0 0}
 .vid{display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--bg);border-radius:14px;padding:14px;text-decoration:none}
 .vid .play{flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:var(--accent);display:grid;place-items:center}
@@ -3636,7 +3636,7 @@ function runSteps(d){return [{k:'warm'},{k:'pre'},...d.slots.map(s=>({k:'ex',s})
 let clockI=null;
 const mmss=ms=>{const t=Math.max(0,Math.floor(ms/1000));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
 function startRun(dayId){const d=DAYS.find(x=>x.id===dayId);run={d,i:0,steps:runSteps(d),done:{},holds:{},fb:{},notes:Object.assign({},(state.draftNotes||{})[dayId]||{}),t0:Date.now(),hw:null};unlockAudio();warmSpeech();$('#run').hidden=false;document.body.style.overflow='hidden';wake(true);
-  clearInterval(clockI);clockI=setInterval(()=>{if(!run){clearInterval(clockI);return;}const c=$('#rclock');if(c&&!run.tEnd)c.textContent=mmss(Date.now()-run.t0);if(run.hw){const sn=Math.floor((Date.now()-run.hw.t)/1000);}const h=$('#holdt');if(h&&run.hw)h.textContent=Math.floor((Date.now()-run.hw.t)/1000)+' sn';},250);drawRun();}
+  clearInterval(clockI);clockI=setInterval(()=>{if(!run){clearInterval(clockI);return;}const c=$('#rclock');if(c&&!run.tEnd)c.textContent=mmss(Date.now()-run.t0);if(run.hw){const sn=Math.floor((Date.now()-run.hw.t)/1000);}const h=$('#holdt');if(h&&run.hw){const sec=Math.floor((Date.now()-run.hw.t)/1000);h.textContent=sec+' sn';const tm=$('#timer');if(tm){tm.textContent=sec+' sn';tm.classList.remove('end');}}},250);drawRun();}
 function endRun(){try{if(AEL)AEL.pause();}catch(e){}stopT();clearInterval(clockI);wake(false);$('#run').hidden=true;$('#run').innerHTML='';document.body.style.overflow='';run=null;}
 function stretchMedia(k){const dr=DRAW['ST:'+k],v=vidsOf(k)[0];
   return (dr?`<div class="stage"><span class="tag">Esneme çizimi · ${dr.view||(dr.k.some(p=>p.front)?'önden':'yandan')}</span><div class="anim" data-draw="ST:${k}"></div><span class="cap" data-cap="ST:${k}">&nbsp;</span></div>`:'')+(v?vidLink(v):'');}
@@ -3653,7 +3653,7 @@ function drawRun(keep){
     body=`<p class="done-hero">Bitti 👏</p><p class="en">${d.t} · ${d.name}</p>
     <div class="sum"><div class="box"><h3>Süre</h3><div class="big">${Math.max(1,Math.round((run.tEnd-run.t0)/60000))} dk</div></div><div class="box"><h3>Set</h3><div class="big">${sm.done} / ${sm.tot}</div></div></div>
     ${sm.holds.length?`<div class="box"><h3>Tutuşlar</h3><div class="plain" style="border:0;padding:0">${sm.holds.map(h=>`<div><span>${esc(h[0])}</span><span class="r">${h[1]}</span></div>`).join('')}</div></div>`:''}
-    ${Object.values(run.fb).some(Boolean)?`<p class="rule">"Kaydet ve kapat"a basınca kolay/zor işaretlerine göre seviyeler güncellenir; değişen hareketin sayfasında "Geri al" var.</p>`:''}<div class="box"><h3>Bugünün notu (isteğe bağlı)</h3><input type="text" id="runnote" placeholder="Örn. barfiks 4-4-3-3, L-sit rahattı"><div style="margin-top:8px"><button class="btn" data-rsave="1">Kaydet ve kapat</button></div></div>`;}
+    ${Object.values(run.fb).some(Boolean)?`<p class="rule">"Kaydet ve kapat"a basınca kolay/zor işaretlerine göre seviyeler güncellenir; değişen hareketin sayfasında "Geri al" var.</p>`:''}<div class="box"><h3>Bugünün notu (isteğe bağlı)</h3><input type="text" id="runnote" placeholder="Örn. barfiks 4-4-3-3, L-sit rahattı"><div style="margin-top:8px"><button class="btn" data-rsave="1">Kaydet ve kapat</button></div></div><button class="linkbtn" data-runx="1" style="margin-top:6px">Kaydetmeden çık</button>`;}
   else {
     const s=st.s, L=LADDERS[s.lad], n=lvlOf(s), lv=L.levels[n-1], dose=doseOf(s,lv), nS=parseInt((dose.match(/(\d+)\s*×/)||[0,3])[1],10);
     const dn=run.done[s.id]||(run.done[s.id]=Array(nS).fill(false)); while(dn.length<nS) dn.push(false); dn.length=nS;
@@ -3661,15 +3661,15 @@ function drawRun(keep){
     const all=dn.every(Boolean);
     body=`<div><span class="chip" style="color:${REG[s.reg]}">${s.reg}</span></div>
      <div><p class="lvname">${esc(lv.tr)}</p><p class="en">${esc(lv.en)} · seviye ${n}/${L.levels.length}</p></div>
-     ${mediaHtml(s.lad,n,lv,1)}
-     ${img?`<div class="photos"><figure><img src="${img[0]}" alt=""><figcaption>Başlangıç</figcaption></figure><figure><img src="${img[1]}" alt=""><figcaption>Bitiş</figcaption></figure></div>`:''}
-     <div class="box"><h3>Nasıl yapılır</h3><ol class="steps">${lv.how.map(h=>`<li><span>${esc(h)}</span></li>`).join('')}</ol></div>
-     ${s.tip?`<p class="note">${esc(s.tip)}</p>`:''}
      <div class="box"><h3>${dose} · dinlenme ${s.rest} sn — bitirdiğin sete dokun</h3><div class="sets bigsets">${dn.map((x,j)=>`<button class="set ${x?'done':''}" data-rset="${j}" aria-pressed="${x}">${j+1}</button>`).join('')}</div>
      <div class="timer" id="timer" style="margin-top:12px">${all?'Hazır':s.rest}</div>
      ${lv.type==='hold'&&!all?`<button class="btn holdbtn ${run.hw&&run.hw.id===s.id?'on':''}" data-rhold="1">${run.hw&&run.hw.id===s.id?'⏹ Bitir · <span id="holdt">0 sn</span>':'⏱ Tutuşu başlat'}</button>`:''}
      ${(run.holds[s.id]||[]).length?`<p class="holds">Tutuşlar: ${run.holds[s.id].map(x=>x+' sn').join(' · ')}</p>`:''}
      ${ruleHtml(n,L,dose)}</div>
+     ${mediaHtml(s.lad,n,lv,1)}
+     ${img?`<div class="photos"><figure><img src="${img[0]}" alt=""><figcaption>Başlangıç</figcaption></figure><figure><img src="${img[1]}" alt=""><figcaption>Bitiş</figcaption></figure></div>`:''}
+     <div class="box"><h3>Nasıl yapılır</h3><ol class="steps">${lv.how.map(h=>`<li><span>${esc(h)}</span></li>`).join('')}</ol></div>
+     ${s.tip?`<p class="note">${esc(s.tip)}</p>`:''}
      <div class="box"><h3>Nasıl geldi? (isteğe bağlı)</h3><div class="fbrow">${['k','z','a'].map(f=>`<button class="fbb ${run.fb[s.id]===f?'on':''} fb-${f}" data-rfb="${f}">${FBN[f]}</button>`).join('')}</div><p class="rule">2 kez kolay → seviye +1 · 2 kez zor → −1 · ağrı → hemen −1</p></div>
      ${(()=>{const pv=state.log.find(e=>e.slotId===s.id&&e.note&&e.note!=='—');return `<div class="box"><h3>Not · bu hareket</h3><textarea class="rnote" data-rnote="${s.id}" rows="2" placeholder="Örn. 2. sette bel düştü, sol omuz çekti, kolay geldi">${esc(run.notes[s.id]||'')}</textarea>${pv?`<p class="rule"><b>Geçen sefer (${esc(pv.date)}):</b> ${esc(pv.note)}</p>`:''}</div>`;})()}
      <button class="linkbtn" data-slot="${s.id}">Seviyeyi değiştir / tüm seviyeler ›</button>
@@ -3688,7 +3688,7 @@ document.addEventListener('click',ev=>{
     const dn=run.done[s.id],j=dn.indexOf(false);if(j>=0)dn[j]=true;drawRun(true);
     if(dn.every(Boolean)){const e=$('#timer');e.textContent='Hazır';e.classList.add('end');hype('ex');}else{playA('set');startT(s.rest);}return;}
   if(t.dataset.run){startRun(t.dataset.run);return;}
-  if(t.dataset.runx){endRun();render(false);return;}
+  if(t.dataset.runx){const fi=run.steps.findIndex(x=>x.k==='fin');const any=Object.values(run.done).some(a=>a.some(Boolean));if(any&&run.i!==fi){run.i=fi;stopT();drawRun();return;}endRun();render(false);return;}
   if(t.dataset.rprev){stopT();run.hw=null;run.i=Math.max(0,run.i-1);drawRun();return;}
   if(t.dataset.rnext){stopT();run.hw=null;run.i=Math.min(run.steps.length-1,run.i+1);drawRun();return;}
   if(t.dataset.rset){const s=run.steps[run.i].s,dn=run.done[s.id],j=+t.dataset.rset;dn[j]=!dn[j];
