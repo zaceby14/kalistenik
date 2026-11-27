@@ -3920,7 +3920,7 @@ function shock(x,y,size,col,delay,ms){const s=document.createElement('i');s.clas
   layer.appendChild(s);s.animate([{transform:'scale(.55)',opacity:.9},{transform:'scale(1.7)',opacity:0}],{duration:ms||650,delay:delay||0,easing:'cubic-bezier(.2,.7,.3,1)',fill:'backwards'}).onfinish=()=>s.remove();}
 function tloop(now){const e=document.getElementById('timer');
   if(e){const txt=e.textContent.trim();let m=null;
-    if(/^\d+$/.test(txt))m=(tI!==null&&fxT)?'rest':'idle';else if(txt==='BAS!')m='go';else if(txt==='Hazır')m='ready';
+    if(/^\d+$/.test(txt))m=(tI!==null&&fxT)?'rest':'idle';else if(txt==='GO!'||txt==='BAS!')m='go';else if(txt==='Hazır')m='ready';
     if(m){e.classList.add('tring');e.classList.toggle('fx-rest',m==='rest');e.classList.toggle('fx-idle',m==='idle');e.classList.toggle('fx-go',m==='go');e.classList.toggle('fx-ready',m==='ready');
       const n=+txt,last=m==='rest'&&n<=3&&n>0;e.classList.toggle('fx-last',last);
       let p=m==='rest'?Math.max(0,1-(now-fxT.t0)/fxT.dur):1;p=Math.round(p*1000)/1000;if(p!==lastP){e.style.setProperty('--p',p);lastP=p;}
