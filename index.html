@@ -4105,6 +4105,41 @@ function defMod(fam,s){const l=(s.label||'')+' '+(s.short||'');
    case 'wrist':return {er:1};
    case 'feet':return {fx:.025};
    default:return {};}}
+/* koç denetimi: seviyeye uymayan kurulum adımları */
+Object.assign(CUE_LAD,{HS_PARA:'handstand'});
+CUE_FAM.handstand.forEach(s=>{if(s.part==='fingers'){s.label='Parmak uçlarıyla düzelt: ayaklar fazla gidince (devrilirken) bastır';}});
+(()=>{const dl=(ks,o)=>ks.forEach(k=>{CUE_LVL[k]=Object.assign({},CUE_LVL[k]||{},o);});
+ dl(['CORE_HOLLOW:1','CORE_HOLLOW:2','CORE_HOLLOW:3','CORE_HOLLOW:4','CORE_PELVIS:1','CORE_PELVIS:3','CORE_PELVIS:4','CORE_PELVIS:5'],{drop:['scap']});
+ dl(['CORE_PELVIS:2'],{only:['pelvis','ribs'],override:{pelvis:{label:'Bel boşluğunu duvara yapıştır: leğen geri',short:'bel duvarda'}}});
+ dl(['CORE_ARCH:1'],{only:['pelvis','legs','neck'],override:{pelvis:{label:'Bel nötr, kalça sıkı, leğen dönmez',short:'bel nötr',type:null},legs:{label:'Uzanan bacak düz, ayak ucu sivri',short:'bacak düz'},neck:{label:'Boyun uzun, bakış yere',short:'boyun uzun'}}});
+ dl(['CORE_ARCH:5','CORE_ARCH:6'],{override:{pelvis:{label:'Kalça sıkı, kalçayı yukarı it: tek çizgi',short:'kalça yukarı',type:null},scap:{label:'Göğüs açık, omuz kulaktan uzak',short:'göğüs açık'}}});
+ dl(['CORE_ARCH:5'],{drop:['legs']});
+ dl(['CORE_ARCH:8'],{only:['pelvis','legs','neck'],override:{pelvis:{label:'Kasık kutu kenarında, kalça sıkı',short:'kalça sıkı'}}});
+ dl(['LS_ACTIVE:1'],{drop:['feet'],override:{pelvis:{label:'Bel yere yapışık, leğen nötr',short:'bel yerde',type:null}}});
+ dl(['LS_ACTIVE:4'],{override:{feet:{label:'Karşı bacak yerde düz ve sabit',short:'karşı bacak yerde'},pelvis:{label:'Bel yere yapışık, leğen nötr',short:'bel yerde',type:null}}});
+ dl(['PU_SHLD:1','PU_SHLD:2','PU_SHLD:3'],{drop:['arm']});
+ dl(['PU_SHLD:3'],{drop:['arm','rot']});
+ dl(['PU_SHLD:8'],{only:['scap','ribs','neck'],override:{scap:{label:'Kol düz; sadece kürek kemiğini aşağı çek',short:'kürek aşağı'}}});
+ dl(['LG_NORDIC:1','LG_NORDIC:2'],{fam:'hinge',only:['feet','pelvis','neck']});
+ dl(['LG_NORDIC:3'],{fam:'hinge',only:['feet','pelvis','pelvis2','neck']});
+ dl(['PR_HEAD:7','PR_HEAD:8'],{drop:['arm','knees'],override:{head:{label:'Önkollar yerde paralel, omuz genişliği; baş yerden yukarıda',short:'önkol paralel',inset:null}}});
+ dl(['PR_HEAD:4','PR_HEAD:5','PR_HEAD:6','PR_HEAD:9'],{drop:['knees']});
+ dl(['PL_PUSH:1','PL_PUSH:2','PL_PUSH:3','PL_PUSH:4','PL_PUSH:5','PL_PUSH:6','PL_PUSH:7','PL_PUSH:8'],{override:{arm:{label:'Üstte dirsek kilitli; inerken dirsek geriye, gövdeye yakın',short:'dirsek geriye'}}});
+ dl(['PL_BENT:5','PL_BENT:6','PL_BENT:7','PL_BENT:8'],{drop:['knees']});
+ dl(['PL_BENT:3','PL_BENT:4'],{override:{arm:{label:'Kollar düz (kilitli), dizler tricepsin üst kısmında',short:'kol düz'}}});
+ dl(['LG_KNEE:1','LG_KNEE:2'],{override:{pelvis:{label:'Sırt duvarda düz, kalça sıkı',short:'sırt duvarda',type:null}}});
+ dl(['PU_LAT:1','PU_LAT:2','PU_LAT:3','PU_LAT:4'],{drop:['legs']});
+ dl(['LS_COMP:1'],{only:['pelvis','legs','hipflex','neck']});
+ dl(['LS_COMP:3','LS_COMP:4','LS_COMP:5','LS_COMP:9'],{override:{hands:{label:'Öne eğil, eller dizlerin yanında yere bassın',short:'el diz yanı',inset:null}}});
+ dl(['LS_COMP:6'],{override:{hands:{label:'Eller baldır / ayak bileği yanında, gövde öne katlı',short:'el önde',inset:null}}});
+ dl(['LS_STRADDLE:1','LS_STRADDLE:2'],{override:{hands:{label:'Eller kalçanın arkasında yerde',short:'el arkada',inset:null}}});
+ dl(['LS_STRADDLE:4','LS_STRADDLE:5'],{override:{hands:{label:'Eller bacakların arasında önde, yere bastır',short:'el önde',inset:null}}});
+ dl(['LS_STRADDLE:6'],{override:{hands:{label:'Eller dizlerin hizasında, gövde öne katlı',short:'el diz hizası',inset:null}}});
+ dl(['LS_STRADDLE:7'],{override:{hands:{label:'Eller olabildiğince önde, leğen öne devrik',short:'el en önde',inset:null}}});
+ dl(['LS_STRADDLE:7'],{override:{pelvis:{label:'Leğeni öne devir, sırt uzun, gövde öne katlı',short:'öne katlı',type:null}}});
+ dl(['LS_STRADDLE:8'],{override:{hands:{label:'Bir el bacak arasında, bir el kalça arkasında',short:'el önde-arkada',inset:null}}});
+ dl(['HS_PARA'],{override:{hands:{label:'Barı nötr tut (avuç içe), başparmak sarar, bilek düz',short:'nötr tutuş',inset:'grip-parallette'},fingers:{label:'Barı sık: öne-arkaya parmak ve avuçla düzelt',short:'barı sık',inset:null}}});
+})();
 function setupOf(d){if(d._su!==undefined)return d._su;const k=d._key||'',lad=k.split(':')[0],lv=CUE_LVL[k]||{},lg=CUE_LVL[lad]||{};
   let fam=lv.fam||lg.fam||CUE_LAD[lad];
   if(!fam&&lad==='ST')fam=/scapular pull|active hang/i.test(k)?'hang_pull':/band|dislocat/i.test(k)?'shoulder_prehab':/scapular push/i.test(k)?'plank':'stretch';
@@ -4116,7 +4151,7 @@ function setupOf(d){if(d._su!==undefined)return d._su;const k=d._key||'',lad=k.s
   {const lvx=(()=>{const L=LADDERS[lad],n=+k.split(':')[1];const l=L&&L.levels&&L.levels[n-1];return l?(l.tr+' '+(l.how||[]).join(' ')):'';})(),tx=(d.alt||'')+' '+lvx;d._txt=tx;
    const bent=/bükük diz|diz(ler)? bükük|\btuck\b|bağdaş|diz kaldır|frog|kurbağa|crow|crane|diz 90|dizler göğ|çömel/i.test(tx),lean_=/yuvarlan|parmak uc|roll|lean|yaslan|walk|yürü|ağırlığı/i.test(tx)&&!/handstand'?a|amut|press$/i.test(d.alt||''),seated=fam==='lsit'&&/oturarak|otur|compression|kaldırma|pulse|raise|lift/i.test(tx)&&!/l-sit|l tut|destek tutuş|kalça kalk|kalçayı kaldır/i.test(tx);
    st=st.map(s=>{if(bent&&/legs|knees/.test(s.part)&&/kilit|düz|uzun/i.test(s.label))return Object.assign({},s,{label:'Dizler bükük ve sabit, ayaklar bitişik',short:'diz bükük',mod:{kb:-.07}});
-     if(seated&&s.part==='pelvis')return Object.assign({},s,{label:'Kalça yerde, bel uzun, gövde dik',short:'gövde dik',type:null,mod:{pd:6}});
+     if(seated&&s.part==='pelvis'){const fw=/öne eğil|öne katl|dizlerin (yanında|hizas)|bacak arasında|baldır|en önde|olabildiğince öne/i.test(tx);return Object.assign({},s,{label:fw?'Kalça yerde, sırt uzun, gövdeyi öne katla':'Kalça yerde, bel uzun, gövde dik',short:fw?'öne katlı':'gövde dik',type:null,mod:{pd:6}});}
      if(bent&&s.part==='hipflex')return null;
      if(fam==='press'&&lean_){if(s.part==='pelvis')return Object.assign({},s,{label:'Kalça yukarı, ağırlık ellere; topuk kalkar',short:'ağırlık ellere',type:null,mod:{sx:-.03}});if(s.part==='compress')return null;}
      return s;}).filter(Boolean);}
@@ -4442,7 +4477,16 @@ const $=s=>document.querySelector(s);
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const TABS=[['g1','Gün 1'],['g2','Gün 2'],['g3','Gün 3'],['isinma','Isınma'],['kayit','Kayıt']];
 let cur=(location.hash||'').slice(1); if(!TABS.some(t=>t[0]===cur)) cur='g1';
-const doseOf=(s,lv)=>lv.type==='hold'?s.hold:s.reps;
+const DOSEFX=(()=>{const S=d=>d.replace(/\s*\/\s*(bacak|taraf)\b/,''),o={};const set=(ks,v)=>ks.forEach(k=>o[k]=v);
+ set(['LG_KNEE:3','LG_KNEE:4','LG_KNEE:5','LG_KNEE:6','LG_KNEE:7','LG_KNEE:8','LG_HINGE:1','LG_HINGE:4','LG_NORDIC:1','LG_NORDIC:2','PR_LEAN:3','PR_LEAN:7','PR_LEAN:8','PR_STRAD:2','PR_STRAD:3','PR_STRAD:5','CORE_PELVIS:1','CORE_PELVIS:2','CORE_PELVIS:3','CORE_PELVIS:5','CORE_PELVIS:6','CORE_PELVIS:8','CORE_PELVIS:9','CORE_HOLLOW:9','CORE_HOLLOW:10','CORE_ARCH:7','CORE_ARCH:8'],S);
+ Object.assign(o,{'LG_KNEE:1':'3 × 30 sn','LG_KNEE:2':'3 × 45-60 sn','LG_NORDIC:4':'3 × 5-10 sn','LG_NORDIC:5':'3 × 3-5','LG_NORDIC:6':'3 × 3-5','LG_NORDIC:7':'3 × 3-5','LG_NORDIC:8':'3 × 2-4','LG_NORDIC:9':'3 × 2-4',
+ 'PU_SHLD:1':'3 × 8-10','PU_SHLD:2':'3 × 6-8','PU_SHLD:3':'3 × 12-15','PU_SHLD:4':'3 × 12-15','PU_SHLD:5':'3 × 12-15','PU_SHLD:6':'3 × 10-12','PU_SHLD:7':'3 × 8-10','PU_SHLD:8':'3 × 5-6 / kol',
+ 'PU_LAT:1':'3 × 10-12','PU_LAT:2':'3 × 10-12','PU_LAT:3':'3 × 10-12 / kol','PU_LAT:4':'3 × 10-12','PU_LAT:5':'4 × 8-12 sn','PU_LAT:6':'4 × 8-12 sn','PU_LAT:8':'4 × 5-10 sn','PU_LAT:9':'4 × 5-8 sn',
+ 'PU_GRIP:1':'3 × 30-60 sn','PU_GRIP:2':'3 × 60 sn','PU_GRIP:3':'4 × 10-20 sn','PU_GRIP:4':'4 × 10-20 sn','PU_GRIP:5':'3 × 30-60 sn','PU_GRIP:6':'4 × 10-20 sn','PU_GRIP:7':'4 × 10-30 sn','PU_GRIP:8':'4 × 5-15 sn',
+ 'PU_ISO:8':'3 × 20-30 sn','PU_ISO:9':'4 × 3-5 sn','HS_BAL:3':'4 × 10-15','HS_ENTRY:1':'3 × 5 / yön','PL_LEAN:8':'4 × 3 / bacak',
+ 'LS_COMP:1':'3 × 8-10 / bacak','LS_STRADDLE:1':'3 × 6-10 / bacak','LS_HANG:4':'4 × 3-5 / bacak','LS_HOLD:4':'4 × 8-12 sn / bacak'});
+ ['LS_ACTIVE:1','LS_ACTIVE:3','LS_ACTIVE:4','LS_ACTIVE:5','LS_ACTIVE:7','LS_ACTIVE:8','LS_ACTIVE:9'].forEach(k=>o[k]='3 × 8-10 / bacak');['LS_ACTIVE:2','LS_ACTIVE:6'].forEach(k=>o[k]='3 × 10-15 sn / bacak');return o;})();
+function doseOf(s,lv){const d=lv.type==='hold'?s.hold:s.reps;try{if(!doseOf.m){doseOf.m=new Map();for(const [a,L] of Object.entries(LADDERS))L.levels.forEach((x,i)=>doseOf.m.set(x,a+':'+(i+1)));}const k=doseOf.m.get(lv),f=DOSEFX[k];return f===undefined?d:(typeof f==='function'?f(d):f);}catch(e){return d;}}
 const vidsOf=k=>(VIDS[k]||[]).filter(v=>v.kind==='short');
 const drawOf=(lad,i)=>DRAW[lad+':'+i];
 const nearOf=k=>(VIDS[k]||[]).filter(v=>v.kind==='near');
