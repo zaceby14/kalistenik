@@ -1,0 +1,10 @@
+const { chromium } = require('playwright');const {PAGE}=require('./lib.js');
+(async()=>{const file=process.argv[2];const b=await chromium.launch();const p=await b.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));await p.goto('file://'+file);await p.evaluate(()=>localStorage.setItem('kal-profil','misafir'));await p.reload();await p.waitForTimeout(300);await p.evaluate(PAGE);
+ const r=await p.evaluate(()=>{const out=[];const cr=(a,b)=>a[0]*b[1]-a[1]*b[0],sub=(a,b)=>[a[0]-b[0],a[1]-b[1]];
+  const fr=(k)=>{const d=DRAW[k];d._tl=null;return d;};
+  const chk=(k,p,i,tag)=>{if(p.front)return;const J=joints(p);if(!J.bk)return;const ch=[-J.bk[0],-J.bk[1]],dn=sub(J.P,J.T),sg=Math.sign(cr(dn,ch));
+   J.arms.forEach(([e,h,far,o])=>{const a=AN.ang(o,e,h);if(a>172)return;const s=Math.sign(cr(sub(e,o),sub(h,e)));if(s!==sg)out.push([k,tag,'ELBOW-HYPER',a,(p.cap||'').slice(0,34)]);});
+   J.legs.forEach(([kn,f,far,st,o])=>{const a=AN.ang(o,kn,f);if(a>172)return;const s=Math.sign(cr(sub(kn,o),sub(f,kn)));if(s!==-sg)out.push([k,tag,'KNEE-HYPER',a,(p.cap||'').slice(0,34)]);});};
+  Object.keys(DRAW).forEach(k=>{const d=DRAW[k];d.k.forEach((p,i)=>{chk(k,p,i,i);if(i<d.k.length-1)[.25,.5,.75].forEach(t=>chk(k,mix(p,d.k[i+1],t),i,i+'>'+(i+1)+'@'+t));});});
+  const seen={};return out.filter(x=>{const key=x[0]+x[2]+x[1];if(seen[key])return 0;return seen[key]=1;});});
+ r.forEach(x=>console.log(x.join(' | ')));console.log(r.length,errs);await b.close();})();

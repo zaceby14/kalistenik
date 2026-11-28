@@ -1,0 +1,7 @@
+const { chromium } = require('playwright');
+(async()=>{const [f0,f1,out]=process.argv.slice(2);const b=await chromium.launch();const get=async f=>{const p=await b.newPage();await p.goto('file://'+f);await p.waitForTimeout(300);
+ const r=await p.evaluate(()=>{const ks=['arm-front','elbow-tuck','er-front','wrist-lean','grip-overhand','grip-underhand','grip-mixed','grip-thumb','grip-wide','grip-towel','grip-parallette','grip-dip','hang-active'];return ks.map(k=>[k,'<svg viewBox="0 0 100 80" style="width:100%;height:100%">'+insetSvg(k,{x:-2,y:0,w:100,h:80},0,true,100)+'</svg>']);});await p.close();return r;};
+ const A=await get(f0),B=await get(f1);const p=await b.newPage({viewport:{width:1300,height:900},deviceScaleFactor:1.5});
+ let h='<style>:root{--ink:#14191f;--accent:#e4572e;--surface:#fff;--line:#d8dee4;--muted:#5b6876;--prop:#9aa4ad;--ok:#2a8150;--towel:#d9913a}body{margin:0;background:#eef1f3;font-family:system-ui}.r{display:grid;grid-template-columns:170px 1fr 1fr 150px 150px;gap:10px;align-items:center;padding:6px 12px}.r div{height:190px}.s{height:84px!important}</style><div class="r" style="font:700 15px system-ui"><span></span><span>Önce</span><span>Sonra</span><span>Önce (telefon boyu)</span><span>Sonra (telefon boyu)</span></div>';
+ A.forEach(([k,s],i)=>{h+='<div class="r"><b>'+k+'</b><div>'+s+'</div><div>'+B[i][1]+'</div><div class="s">'+s+'</div><div class="s">'+B[i][1]+'</div></div>';});
+ await p.setContent(h);await p.screenshot({path:out,fullPage:true});await b.close();})();

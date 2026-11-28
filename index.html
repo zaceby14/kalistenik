@@ -5019,6 +5019,59 @@ const AN0=(a,b,c)=>{const u=[a[0]-b[0],a[1]-b[1]],v=[c[0]-b[0],c[1]-b[1]];return
  Object.keys(DRAW).filter(k=>/^(HS_|PPU_HSPU:)/.test(k)).forEach(k=>{RS(DRAW[k]);fxBox(DRAW[k]);});
 }
 Object.keys(DRAW).forEach(k=>{if(/^(PL|PL_LEAN|PL_TUCK|PL_PUSH):/.test(k)&&!DRAW[k].ho)DRAW[k].ho=-1;});
+/* ===== QA2 (2. bağımsız görsel denetim) düzeltmeleri — grup A ===== */
+{const LV=k=>CUE_LVL[k]=CUE_LVL[k]||{};
+ const OV=(k,o)=>{const c=LV(k);c.override=c.override||{};Object.entries(o).forEach(([p,s])=>{c.override[p]=Object.assign({},c.override[p]||{},s);});};
+ const LEN=(LL1+LL2)*.998;
+ /* ters-L / kutu pike: kutudaki ayakla diz kilitli (bacak V'ye sarkmaz) */
+ const lockKnee=(k)=>{const d=DRAW[k],bx=(d.props||[]).find(q=>q[0]==='box');d.k.forEach(p=>{p.feet=p.feet.map(f=>{const dx=f[0]-p.P[0],dy=f[1]-p.P[1];if(Math.hypot(dx,dy)>=LEN-.002||Math.abs(dy)>=LEN)return f;
+   let x=p.P[0]+Math.sign(dx||-1)*Math.sqrt(LEN*LEN-dy*dy);if(bx)x=Math.max(bx[1]+.03,Math.min(bx[2]-.02,x));return [x,f[1],...f.slice(2)];});});};
+ ['HS_LINE:3','HS_PARA:2','HS_SHIFT:2','HS_SHIFT:3','PPU_HSPU:6'].forEach(lockKnee);
+ /* kurulum başlangıç pozunda: ipucu başlangıcı ve hareketin yönünü anlatır (hedef poz hareket turunda gelir) */
+ OV('HS_LINE:2',{pelvis:{label:'Ters V\'de başla: kalça yukarı; harekette omuz bileğin üstüne kayar',short:'ters V'}});
+ OV('HS_PARA:1',{pelvis:{label:'Pike\'ta başla: kalça yukarı; harekette omuz barın üstüne gelir',short:'kalça yukarı'}});
+ OV('HS_LINE:3',{pelvis:{label:'Ayaklar kutuda başla; kalçayı omuz üstüne it: gövde dikleşir (ters L)',short:'kalça yukarı'}});
+ OV('HS_PARA:2',{pelvis:{label:'Ayaklar kutuda başla; kalçayı omuz üstüne it: gövde dikleşir (ters L)',short:'kalça yukarı'}});
+ /* HS_BAL:1 tripod: yere bas, omuz kulaktan uzak (boyun yük almaz); hareket karesinde 'omuz kulağa' etiketi yok */
+ OV('HS_BAL:1',{scap:{label:'Ellerle yere bas, omuzları kulaktan uzaklaştır: boyun yük almaz',short:'yere bas'}});
+ LV('HS_BAL:1').key={1:['line','ang:elb']};
+ /* HS_BAL:2 frog stand: dirsek hafif bükük raf; diz dirseğin dış-üstünde */
+ OV('HS_BAL:2',{arm:{label:'Dirsekler hafif bükük: dizlere raf olur',short:'dirsek raf'},knees:{label:'Dizler dirseklerin dış-üstüne yaslanır',short:'diz dirsekte'}});
+ /* HS_BAL:3 parmak zıplama: konuşu parmakla yumuşat */
+ {const c=LV('HS_BAL:3');(c.add||[]).forEach(s=>{if(s.part==='fingers'){s.label='Parmak uçlarıyla yumuşak kon, avuçla yeniden it';s.short='parmakla kon';}});}
+ /* göğüs duvarda toe pull: avuç topuğu insetı */
+ INSET['hands-heel']=()=>INSET['hands-pressure']().replace('öne düşerken parmakla bastır','avuç topuğuyla it');
+ {const c=LV('HS_BAL:6');(c.add||[]).forEach(s=>{if(/avuç topu/i.test(s.label))s.inset='hands-heel';});}
+ {const c=LV('HS_PARA:5');(c.add||[]).forEach(s=>{if(/avuç topu/i.test(s.label)){s.short='avuç topuğu';s.inset='hands-heel';}});}
+ /* HS_ENTRY:1 cartwheel çıkışı: seviyenin konusu kurulumda */
+ {const c=LV('HS_ENTRY:1');c.add=(c.add||[]).concat([{part:'pelvis',label:'Çıkış: ağırlığı bir ele aktar, öbür eli kaldır; kalça yana döner, ayakla yere in',short:'yana çık'}]);}
+ /* HS_SHIFT:1 pike ağırlık kaydırma: kalça da yüklenen ele kayar (etiket tarafı gösterir); ayaklar yerde */
+ {const d=DRAW['HS_SHIFT:1'];d.k[0].P=[-.05,d.k[0].P[1]];d.k[2].P=[.05,d.k[2].P[1]];
+  OV('HS_SHIFT:1',{legs:{label:'Dizler kilitli, ayaklar bitişik, parmak ucunda',short:'diz kilit'}});}
+ /* HS_SHIFT:2 el kaldırma: arka (gri) el kalkar, ön destek kolu kilitli kalır; el öne kaymaz */
+ {const d=DRAW['HS_SHIFT:2'];d.k[1].hands=[[0,.03,-1,1],[0,0,-1]];d.k[1].cap='Bir el 2-3 cm kalkar, ağırlık öbür elde; gövde sabit';}
+ /* HS_SHIFT:3 omuza dokunma: el omuz hizasında */
+ {const d=DRAW['HS_SHIFT:3'];d.k[2].hands[1]=[.06,d.k[2].S[1]-.01,-1];}
+ /* HS_SHIFT:6 / :8 tek el: gövde-kalça destek elinin üstüne yığılır */
+ {const d=DRAW['HS_SHIFT:6'];const sh=(p,sx,px)=>{const dx=px-p.P[0];p.S=[sx,p.S[1]];p.P=[px,p.P[1]];p.feet=p.feet.map(f=>[f[0]+dx,...f.slice(1)]);};
+  sh(d.k[1],.14,.18);sh(d.k[2],.2,.26);d.k[2].hands[0]=[.33,.5,-1];
+  const e=DRAW['HS_SHIFT:8'];sh(e.k[1],.18,.24);}
+ /* HS_PARA:4: gövde duvar şeridine girmez, duvar ayaktan uzun */
+ {const d=DRAW['HS_PARA:4'];d.props=d.props.map(q=>q[0]==='wall'?['wall',-.235,2.65,...q.slice(3)]:q);}
+ /* HS_PARA:9 straddle: bacak açısı etiketle uyumlu (~95°) */
+ {const d=DRAW['HS_PARA:9'],L=LL1+LL2,a=47.5*Math.PI/180;d.k[3].feet=[[-.09-L*Math.sin(a),1.421+L*Math.cos(a),1,0],[.09+L*Math.sin(a),1.421+L*Math.cos(a),-1,0]];
+  const b=30*Math.PI/180;d.k[2].feet=[[-.09-L*Math.sin(b),1.421+L*Math.cos(b),1,0],[.09+L*Math.sin(b),1.421+L*Math.cos(b),-1,0]];}
+ /* HS_ENTRY:9 pike sıçrayış başlangıcı: omuz bilek üstünde, dizler düz */
+ {const p=DRAW['HS_ENTRY:9'].k[0];p.S=[.02,.55];const f=p.feet[0];/* kalça: omuzdan .55, ayaktan bacak boyu */
+  const c1=p.S,r1=.55,c2=[f[0],f[1]],r2=LEN,dx=c2[0]-c1[0],dy=c2[1]-c1[1],D=Math.hypot(dx,dy),aa=(r1*r1-r2*r2+D*D)/(2*D),h=Math.sqrt(Math.max(0,r1*r1-aa*aa)),mx=c1[0]+aa*dx/D,my=c1[1]+aa*dy/D;
+  const o1=[mx+h*dy/D,my-h*dx/D],o2=[mx-h*dy/D,my+h*dx/D];p.P=o1[1]>o2[1]?o1:o2;p.h=-70;}
+ /* PPU_HSPU:1 dizler yerde: parmak ucu ipucu yok */
+ OV('PPU_HSPU:1',{pelvis:{label:'Dizler yerde, hafif öne yaslan: omuz bilek üstüne',short:'öne yaslan'}});
+ /* PPU_HSPU:3 altta pike korunur: kalça açısı ≤90° (kalça omuzla birlikte iner, öne kaymaz) */
+ {const d=DRAW['PPU_HSPU:3'];[3,4].forEach(i=>{const p=d.k[i],f=p.feet[0];const c1=p.S,r1=Math.hypot(p.P[0]-p.S[0],p.P[1]-p.S[1]),c2=[f[0],f[1]],r2=Math.min(LEN,Math.hypot(p.P[0]-f[0],p.P[1]-f[1])+.03);
+   const dx=c2[0]-c1[0],dy=c2[1]-c1[1],D=Math.hypot(dx,dy),aa=(r1*r1-r2*r2+D*D)/(2*D),h=Math.sqrt(Math.max(0,r1*r1-aa*aa)),mx=c1[0]+aa*dx/D,my=c1[1]+aa*dy/D;
+   const o1=[mx+h*dy/D,my-h*dx/D],o2=[mx-h*dy/D,my+h*dx/D];p.P=o1[1]>o2[1]?o1:o2;});}
+}
 applyCues();
 /* Grup C görsel QA düzeltmeleri: kurulum pozu = asıl tutuş, seviyeye uymayan ipuçları */
 (()=>{const M=(ks,o)=>ks.forEach(k=>{const c=CUE_LVL[k]=Object.assign({},CUE_LVL[k]||{});if(o.override){c.override=Object.assign({},c.override||{});Object.entries(o.override).forEach(([p,s])=>{c.override[p]=Object.assign({},c.override[p]||{},s);});}if(o.drop)c.drop=[...(c.drop||[]),...o.drop];if(o.add){const ad=(c.add||[]).filter(s=>!o.add.some(x=>x.part===s.part));c.add=[...ad,...o.add];}});

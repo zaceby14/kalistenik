@@ -1,0 +1,4 @@
+const { chromium } = require('playwright');const {PAGE}=require('./lib.js');
+(async()=>{const [f,re]=process.argv.slice(2);const b=await chromium.launch();const p=await b.newPage();await p.goto('file://'+f);await p.evaluate(()=>localStorage.setItem('kal-profil','misafir'));await p.reload();await p.waitForTimeout(300);await p.evaluate(PAGE);
+const r=await p.evaluate(re=>{const R=new RegExp(re);let o=[];Object.entries(LADDERS).filter(([c])=>R.test(c)).forEach(([c,L])=>{o.push('## '+c+' '+L.name);L.levels.forEach((l,i)=>{const k=c+':'+(i+1),d=DRAW[k];o.push(`### ${k} ${l.tr} | ${l.en} | ${l.type||''} | dose:${l.dose||''}`);o.push('how: '+(l.how||[]).join(' / '));if(!d){o.push('NO DRAW');return;}o.push('view:'+(d.view||'')+' props:'+JSON.stringify(d.props||d.prop||'').slice(0,80));d.k.forEach((x,j)=>o.push(`  k${j} cap:${x.cap||''} ${JSON.stringify(AN.met(x))}`));});});return o.join('\n');},re);
+console.log(r);await b.close();})();

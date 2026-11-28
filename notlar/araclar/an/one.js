@@ -1,0 +1,5 @@
+// node an/one.js file out.png CODE#frame ...  -> overlay visible (hold %60), zoomed
+const { chromium } = require('playwright');const {PAGE}=require('./lib.js');
+(async()=>{const [f,out,...ks]=process.argv.slice(2);const b=await chromium.launch();const p=await b.newPage({viewport:{width:360*Math.min(4,ks.length),height:400},deviceScaleFactor:2});await p.goto('file://'+f);await p.waitForTimeout(300);await p.evaluate(PAGE);
+const sv=await p.evaluate(K=>K.map(x=>{const [k,i]=x.split('#');const d=DRAW[k];const tl=d._tl||(d._tl=timeline(d));let t=0;for(const s of tl){if(s.a===+i&&s.b===+i){t+=s.d*.6;break;}t+=s.d;}return '<div style="width:350px;height:330px;display:inline-block;background:#eef1f3;margin:3px;vertical-align:top"><div style="font:12px sans-serif">'+x+' '+(d.alt||'')+'</div>'+svgFor(d,t).svg.replace('<svg ','<svg style="width:100%;height:300px" ')+'</div>';}).join(''),ks);
+await p.setContent('<style>:root{--ink:#14191f;--far:#9aa5b1;--stage:#eef1f3;--floor:#e3e8ec;--prop:#9aa5b1;--boxc:#dde2e8;--accent:#e4572e;--towel:#e0a458}body{margin:0}</style>'+sv);await p.screenshot({path:out,fullPage:true});await b.close();})();

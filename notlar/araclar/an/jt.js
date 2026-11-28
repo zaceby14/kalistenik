@@ -1,0 +1,3 @@
+const { chromium } = require('playwright');
+(async()=>{const [f,...ks]=process.argv.slice(2);const b=await chromium.launch();const p=await b.newPage();await p.goto('file://'+f);await p.evaluate(()=>localStorage.setItem('kal-profil','misafir'));await p.reload();await p.waitForTimeout(300);
+console.log(await p.evaluate(ks=>ks.map(x=>{const [k,i]=x.split('#');const J=joints(DRAW[k].k[+i]);const r=a=>Array.isArray(a)?a.map(v=>typeof v==="number"?+v.toFixed(2):v):a;return x+' S'+r(J.S)+' P'+r(J.P)+' T'+r(J.T)+' head'+r(J.head)+' legs:'+J.legs.map(l=>l.slice(0,5).map(q=>Array.isArray(q)?'['+r(q)+']':q).join(' ')).join(' | ')+' arms:'+J.arms.map(l=>l.slice(0,4).map(q=>Array.isArray(q)?'['+r(q)+']':q).join(' ')).join(' | ');}).join('\n'),ks));await b.close();})();

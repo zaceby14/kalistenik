@@ -1,0 +1,4 @@
+const { chromium } = require('playwright');
+(async()=>{const [f,out,...ks]=process.argv.slice(2);const b=await chromium.launch();const p=await b.newPage({viewport:{width:1400,height:900},deviceScaleFactor:1.6});await p.goto('file://'+f);await p.waitForTimeout(300);
+const r=await p.evaluate(K=>(K.length?K:Object.keys(INSET)).map(k=>'<div style="display:inline-block;margin:6px;text-align:center;font:12px sans-serif">'+k+'<br><svg viewBox="-2 -2 104 84" style="width:320px;height:258px"><rect x="0" y="0" width="100" height="80" rx="8" fill="#fff" stroke="#d8dee4" stroke-width="1.5"/>'+INSET[k]()+'</svg></div>').join(''),ks);
+await p.setContent('<style>:root{--ink:#14191f;--accent:#e4572e;--surface:#fff;--line:#d8dee4;--muted:#5b6876;--prop:#9aa4ad;--ok:#2a8150;--towel:#d9913a}body{margin:0;background:#eef1f3}</style>'+r);await p.screenshot({path:out,fullPage:true});await b.close();})();
