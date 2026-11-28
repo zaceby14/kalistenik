@@ -899,7 +899,7 @@ function poseAt(d,time){const m=phaseOf(d,time);
   if(m.ph==='setup'){const su=m.su,tt=m.t,q=suStep(su,tt),i=q.i,u=q.u;return{ph:'setup',p:setupPose(d,su,i,u),cap:(i+1)+'/'+su.length+' · '+su[i].label,cop:0,su:{i,u,n:su.length,st:su[i],d}};}
   const r=poseAt0(d,m.t,m.ph==='plain');r.ph=m.ph;if(m.ph==='plain'){r.cop=0;r.plain=1;}return r;}
 function poseAt0(d,time,plain){const {sg:seg,tot}=tlOf(d,plain);
-  let t=time%tot;for(const s of seg){if(t<=s.d) return s.a===s.b?{p:d.k[s.a],cap:d.k[s.a].cap,cop:cueOp(t,s.d,!!d.k[s.a].cue)}:{p:mix(d.k[s.a],d.k[s.b],ease(t/s.d)),cap:(t/s.d<.5?d.k[s.a]:d.k[s.b]).cap};t-=s.d;}return{p:d.k[0],cap:d.k[0].cap};}
+  let t=time%tot;for(const s of seg){if(t<=s.d) return s.a===s.b?{p:d.k[s.a],cap:d.k[s.a].cap,cop:cueOp(t,s.d,!!d.k[s.a].cue)}:{p:mix(d.k[s.a],d.k[s.b],ease(t/s.d)),cap:d.k[s.a].cap};t-=s.d;}return{p:d.k[0],cap:d.k[0].cap};}
 function bounds(d){if(d._b) return d._b;let xs=[],ys=[0];
   const add=p=>{const J=joints(p);[J.S,J.P,J.head,...J.legs.flatMap(l=>[l[0],l[1]]),...J.arms.flatMap(l=>[l[0],l[1]])].forEach(q=>{xs.push(q[0]);ys.push(q[1]);});ys.push(J.head[1]+.12);xs.push(J.head[0]-.12,J.head[0]+.12);};
   d.k.forEach((p,i)=>{add(p);if(i<d.k.length-1)for(let s=1;s<4;s++)add(mix(p,d.k[i+1],s/4));});
@@ -1047,11 +1047,14 @@ function svgFor(d,time){
     {const st=at(.08,-ws*.72);o+=L2(st,p.S,.016,.8);J.clav=[st,p.S];}
     /* kürek kemiği: sh yukarı/aşağı kaydırır, pr omurgadan uzaklaştırır (protraksiyon) ya da yaklaştırır */
     {const sh=p.sh||0,pr=p.pr||0,f0=.1-sh*2.4,u0=Math.max(ws*.3,ws*.98+rb*.55-pr*1.6+Math.max(0,-pr)*.2);
-     const sup=at(f0,u0),inf=at(f0+.36,u0-.03),acr=[p.S[0]*.55+sup[0]*.45,p.S[1]*.55+sup[1]*.45],spn=at(f0+.08,u0-.02);
+     /* sırt çizgisine oturt: üst sırt kenarının o yükseklikteki genişliğini aşma */
+     const wB=f=>{const fb=Math.max(0,Math.min(1,1-f/.56)),K=[[0,wp*.84],[.3,ws*1.12+rb],[.7,ws*1.075+rb*.6],[1,ws*.92]];for(let i=1;i<K.length;i++)if(fb<=K[i][0]){const q=(fb-K[i-1][0])/(K[i][0]-K[i-1][0]);return K[i-1][1]+(K[i][1]-K[i-1][1])*q;}return K[K.length-1][1];};
+     const uS=Math.min(u0,wB(f0)-.012),uI=Math.min(u0-.03,wB(f0+.36)-.012);
+     const sup=at(f0,uS),inf=at(f0+.36,uI),acr=[p.S[0]*.55+sup[0]*.45,p.S[1]*.55+sup[1]*.45],spn=at(f0+.08,uS-.02);
      const col=p.sc?'var(--accent)':OL,op=p.sc?'.95':'.5';
-     o+=`<path d="M${F(sup[0])} ${F(Y(sup[1]))} L${F(inf[0])} ${F(Y(inf[1]))} Q${F(at(f0+.2,u0-.12)[0])} ${F(Y(at(f0+.2,u0-.12)[1]))} ${F(acr[0])} ${F(Y(acr[1]))} Z" fill="${col}" fill-opacity="${op}" stroke="${col}" stroke-width=".02" stroke-linejoin="round" stroke-opacity="${op}"/>`;
+     o+=`<path d="M${F(sup[0])} ${F(Y(sup[1]))} L${F(inf[0])} ${F(Y(inf[1]))} Q${F(at(f0+.2,uS-.12)[0])} ${F(Y(at(f0+.2,uS-.12)[1]))} ${F(acr[0])} ${F(Y(acr[1]))} Z" fill="${col}" fill-opacity="${op}" stroke="${col}" stroke-width=".02" stroke-linejoin="round" stroke-opacity="${op}"/>`;
      o+=`<line x1="${F(spn[0])}" y1="${F(Y(spn[1]))}" x2="${F(acr[0])}" y2="${F(Y(acr[1]))}" stroke="${OL}" stroke-width=".013" stroke-opacity=".7"/>`;
-     J.scap={sup,inf,c:mid(sup,inf),u0,f0};J.bkv=[bx,by];J.ax=[ux_,uy_];}
+     J.scap={sup,inf,c:mid(sup,inf),u0:uS,f0};J.bkv=[bx,by];J.ax=[ux_,uy_];}
     o+=jd(M,.018)+jd(J.P,.022);
     return o;};
   s+=limb(true);
@@ -4625,12 +4628,12 @@ function setupOf(d){if(d._su!==undefined)return d._su;const k=d._key||'',lad=k.s
   if(!fam&&lad==='ST')fam=/scapular pull|active hang/i.test(k)?'hang_pull':/band|dislocat/i.test(k)?'shoulder_prehab':/scapular push/i.test(k)?'plank':'stretch';
   if(!fam||!CUE_FAM[fam]){d._su=null;return null;}
   let st=CUE_FAM[fam].map(s=>Object.assign({},s));
-  [lg,lv].forEach(o=>{if(o.override)Object.entries(o.override).forEach(([p,s])=>{const i=st.findIndex(x=>x.part===p);if(i>=0)st[i]=Object.assign({},st[i],s);else st.push(Object.assign({},s));});
+  [lg,lv].forEach(o=>{if(o.override)Object.entries(o.override).forEach(([p,s])=>{const i=st.findIndex(x=>x.part===p);if(i>=0)st[i]=Object.assign({},st[i],s,{_ov:1});else st.push(Object.assign({},s,{_ov:1}));});
     if(o.only)st=st.filter(x=>o.only.includes(x.part));if(o.drop)st=st.filter(x=>!o.drop.includes(x.part));
-    if(o.add)o.add.forEach(s=>{const i=st.findIndex(x=>x.part===s.part);if(i>=0)st.splice(i+1,0,Object.assign({},s));else st.push(Object.assign({},s));});});
+    if(o.add)o.add.forEach(s=>{const i=st.findIndex(x=>x.part===s.part);if(i>=0)st.splice(i+1,0,Object.assign({},s,{_ov:1}));else st.push(Object.assign({},s,{_ov:1}));});});
   {const lvx=(()=>{const L=LADDERS[lad],n=+k.split(':')[1];const l=L&&L.levels&&L.levels[n-1];return l?(l.tr+' '+(l.how||[]).join(' ')):'';})(),tx=(d.alt||'')+' '+lvx;d._txt=tx;
    const bent=/bükük diz|diz(ler)? bükük|\btuck\b|bağdaş|diz kaldır|frog|kurbağa|crow|crane|diz 90|dizler göğ|çömel/i.test(tx),lean_=/yuvarlan|parmak uc|roll|lean|yaslan|walk|yürü|ağırlığı/i.test(tx)&&!/handstand'?a|amut|press$/i.test(d.alt||''),seated=fam==='lsit'&&/oturarak|otur|compression|kaldırma|pulse|raise|lift/i.test(tx)&&!/l-sit|l tut|destek tutuş|kalça kalk|kalçayı kaldır/i.test(tx);
-   st=st.map(s=>{if(bent&&/legs|knees/.test(s.part)&&/kilit|düz|uzun/i.test(s.label))return Object.assign({},s,{label:'Dizler bükük ve sabit, ayaklar bitişik',short:'diz bükük',mod:{kb:-.07}});
+   st=st.map(s=>{if(s._ov)return s;if(bent&&/legs|knees/.test(s.part)&&/kilit|düz|uzun/i.test(s.label))return Object.assign({},s,{label:'Dizler bükük ve sabit, ayaklar bitişik',short:'diz bükük',mod:{kb:-.07}});
      if(seated&&s.part==='pelvis'){const fw=/öne eğil|öne katl|dizlerin (yanında|hizas)|bacak arasında|baldır|en önde|olabildiğince öne/i.test(tx);return Object.assign({},s,{label:fw?'Kalça yerde, sırt uzun, gövdeyi öne katla':'Kalça yerde, bel uzun, gövde dik',short:fw?'öne katlı':'gövde dik',type:null,mod:{pd:6}});}
      if(bent&&s.part==='hipflex')return null;
      if(fam==='press'&&lean_){if(s.part==='pelvis')return Object.assign({},s,{label:'Kalça yukarı, ağırlık ellere; topuk kalkar',short:'ağırlık ellere',type:null,mod:{sx:-.03}});if(s.part==='compress')return null;}
@@ -4639,9 +4642,9 @@ function setupOf(d){if(d._su!==undefined)return d._su;const k=d._key||'',lad=k.s
   st=st.filter(s=>!(fr&&(s.part==='pelvis'||s.part==='ribs')&&s.type==='rot'));
   st.forEach(s=>{if(s.part==='wrist'&&!s.inset)s.inset='wrist-straight';if(!s.mod)s.mod=defMod(fam,s);if(fr){const m=Object.assign({},s.mod);delete m.pd;delete m.lb;delete m.rb;delete m.pr;delete m.hx;delete m.sx;if(s.part==='ribs')m.tw=.14;if(s.part==='pelvis'||s.part==='pelvis2'||s.part==='hipflex'||s.part==='compress')m.h=-12;s.mod=m;}});
   {const p0=d.k[0],J0=joints(p0),hs=J0.arms.map(a=>a[1]),near=(k_)=>(d.props||[]).some(q=>q[0]===k_&&hs.some(h=>k_==='par'?Math.abs(h[1]-q[2])<.08:Math.abs(h[1]-q[2])<.1));
-   const hi=st.findIndex(x=>x.part==='hands');if(hi>=0){if(near('par'))st[hi]=Object.assign({},st[hi],{label:'Barı nötr tut (avuç içe), başparmak sarar, bilek düz',short:'nötr tutuş',inset:'grip-parallette',mod:{er:1}});
+   const hi=st.findIndex(x=>x.part==='hands');if(hi>=0&&!st[hi]._ov){if(near('par'))st[hi]=Object.assign({},st[hi],{label:'Barı nötr tut (avuç içe), başparmak sarar, bilek düz',short:'nötr tutuş',inset:'grip-parallette',mod:{er:1}});
      else if(near('dip'))st[hi]=Object.assign({},st[hi],{label:'Dip barını nötr tut, eller gövde yanında',short:'nötr tutuş',inset:'grip-dip',mod:{er:1}});}}
-  st=st.slice(0,8);d._fam=fam;d._su=st.length?st:null;
+  d._fam=fam;d._su=st.length?st:null;
   /* her adımın hatası küçük kalsın: eklem sapması > 7.5 cm ise mod ölçeklenir */
   if(d._su){const pts=J=>[J.T,J.P,J.head,...J.arms.flatMap(a=>[a[0],a[1]]),...J.legs.flatMap(l=>[l[0],l[1]])],P0=pts(joints(d.k[0]));
     d._su.forEach((s,j)=>{for(let it=0;it<3;it++){const P=pts(joints(setupPose(d,d._su,j,.2)));const dev=Math.max(...P.map((q,n)=>Math.hypot(q[0]-P0[n][0],q[1]-P0[n][1])));if(dev<=.075)break;const f_=.075/dev*.95;
@@ -4803,7 +4806,7 @@ function frontCues(k,d,fr){const c=k.split(':')[0],alt=d.alt||'',add=(i,q)=>{con
 }
 function applyCues(){const A3=(a,b,c)=>{const u=[a[0]-b[0],a[1]-b[1]],v=[c[0]-b[0],c[1]-b[1]];return Math.acos(Math.max(-1,Math.min(1,(u[0]*v[0]+u[1]*v[1])/(Math.hypot(...u)*Math.hypot(...v)||1))))/RD0;};
  const met=p=>{const J=joints(p),a=J.arms[J.arms.length-1],l=J.legs[J.legs.length-1],fa=p.facing??1;
-   return{elb:a?A3(a[3],a[0],a[1]):180,hip:l?A3(J.T,J.P,l[0]):180,kn:l?A3(l[4],l[0],l[1]):180,inv:J.T[1]<J.P[1]-.15,shf:a?(a[3][0]-a[1][0])*fa:0,handDown:a?a[1][1]<J.T[1]:0,pr:p.pr||0,sh:p.sh||0,lb:p.lb||0};};
+   return{elb:a?A3(a[3],a[0],a[1]):180,hip:l?A3(J.T,J.P,l[0]):180,kn:l?A3(l[4],l[0],l[1]):180,inv:J.T[1]<J.P[1]-.15,shf:a?(a[3][0]-a[1][0])*fa:0,handDown:a?a[1][1]<J.T[1]:0,tdx:J.T[0]-J.P[0],tdy:J.T[1]-J.P[1],pr:p.pr||0,sh:p.sh||0,lb:p.lb||0};};
  const RULE=c=>{
   if(/^(HS|HS_BAL|HS_LINE|HS_SHIFT|HS_PARA|HS_ENTRY|PWALL)$/.test(c))return 'hs';
   if(/^(PL_LEAN|PL|PL_TUCK)$/.test(c))return 'lean';
@@ -4827,12 +4830,14 @@ function applyCues(){const A3=(a,b,c)=>{const u=[a[0]-b[0],a[1]-b[1]],v=[c[0]-b[
   const argmin=f=>side.reduce((b,i)=>f(M[i])<f(M[b])?i:b,side[0]),argmax=f=>side.reduce((b,i)=>f(M[i])>f(M[b])?i:b,side[0]);
   const scapF=side.filter(i=>Math.abs(M[i].pr)>.02),shF=side.filter(i=>Math.abs(M[i].sh)>.025);
   const bent=argmin(m=>m.elb),pike=argmin(m=>m.hip),knee=argmin(m=>m.kn);
+  /* 'omuz önde' sadece eğik destek karelerinde: eller yükte, gövde dik ayakta değil, dikey handstand değil */
+  const supF=side.filter(i=>{const m=M[i];const stand=m.tdy>0&&Math.abs(m.tdx)<Math.abs(m.tdy)*.6,vert=m.inv&&Math.abs(m.tdx)<Math.abs(m.tdy)*.45;return m.handDown&&!stand&&!vert;}),plumbAt=()=>supF.length?supF.reduce((b,i)=>M[i].shf>M[b].shf?i:b,supF[0]):null;
   scapF.forEach(i=>add(i,'scap'));
   if(r==='hs'){const inv=side.filter(i=>M[i].inv);const j=inv.length?inv[inv.length-1]:last;
     const hd_=joints(d.k[j]).head[1]<.2;if(M[j].hip<135){if(!hd_)add(j,'plumb');add(j,'ang:hip');}else if(M[j].inv)add(j,hd_?'line':'stack');else if(M[j].elb<150)add(j,'ang:elb');else add(j,'plumb');
     shF.forEach(i=>add(i,'dep'));}
-  else if(r==='lean'){add(argmax(m=>m.shf),'plumb');if(M[pike].hip<120)add(pike,'ang:hip');}
-  else if(r==='bentpush'){add(bent,'ang:elb');add(argmax(m=>m.shf),'plumb');}
+  else if(r==='lean'){add(plumbAt(),'plumb');if(M[pike].hip<120)add(pike,'ang:hip');}
+  else if(r==='bentpush'){add(bent,'ang:elb');add(plumbAt(),'plumb');}
   else if(r==='vpush'){add(bent,'ang:elb');add(bent,'plumb');if(M[side[0]].hip<130)add(side[0],'ang:hip');}
   else if(r==='dip'){if(M[bent].elb<150)add(bent,'ang:elb');shF.forEach(i=>add(i,'dep'));if(!shF.length&&M[bent].elb>=150)add(last,'plumb');}
   else if(r==='lat'){if(/front lever/i.test(d.alt||''))add(last,'line');add(last,'ang:sh');}
@@ -4841,7 +4846,7 @@ function applyCues(){const A3=(a,b,c)=>{const u=[a[0]-b[0],a[1]-b[1]],v=[c[0]-b[
   else if(r==='lsit'){add(pike,'ang:hip');shF.filter(i=>M[i].sh<0).forEach(i=>add(i,'dep'));}
   else if(r==='hollow'){add(last,'bel');if(M[pike].hip<120)add(pike,'ang:hip');}
   else if(r==='arch'){add(last,'bel');}
-  else if(r==='press'){const inv=side.filter(i=>M[i].inv&&M[i].hip>150);if(M[pike].hip<120)add(pike,'ang:hip');add(argmax(m=>m.shf),'plumb');if(inv.length)add(inv[inv.length-1],'stack');}
+  else if(r==='press'){const inv=side.filter(i=>M[i].inv&&M[i].hip>150);if(M[pike].hip<120)add(pike,'ang:hip');add(plumbAt(),'plumb');if(inv.length)add(inv[inv.length-1],'stack');}
   else if(r==='quad')add(knee,'ang:knee');
   else if(r==='knee'){if(/nordic/i.test(d.alt||''))add(knee,'kline');else add(knee,'ang:knee');}
   else if(r==='hinge'){if(/köprü/i.test(d.alt||''))add(last,'kline');else{add(pike,'ang:hip');add(pike,'bel');}}
